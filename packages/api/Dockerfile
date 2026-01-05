@@ -13,6 +13,8 @@ COPY ./yarn.lock													./
 COPY ./packages/api 												./packages/api
 COPY ./packages/db 													./packages/db
 
+ENV DATABASE_URL=dockerbuildisempty
+
 RUN yarn install && \
 	yarn workspace @jg/db prisma:generate && \
 	yarn workspace @jg/api build && \
