@@ -31,18 +31,18 @@ jobs:
                   username: DOCKER_LOGIN
                   password: ${{ secrets.DOCKER_PSW }}
 
-            # - name: Build and push Docker image
-            #   uses: docker/build-push-action@v5
-            #   with:
-            #       context: .
-            #       file: ./packages/bff/Dockerfile
-            #       push: true
-            #       tags: ${{ vars.REGISTRY_URL }}:${{ env.TAG }}
-            #       cache-from: type=registry,ref=${{ vars.REGISTRY_URL }}:buildcache
-            #       cache-to: type=registry,ref=${{ vars.REGISTRY_URL }}:buildcache,mode=max
-            #       build-args: |
-            #           COMMIT_HASH=${{ github.sha }}
-            #           BUILD_DATE=${{ github.run_started_at }}
+            - name: Build and push Docker image
+              uses: docker/build-push-action@v5
+              with:
+                  context: .
+                  file: ./packages/bff/Dockerfile
+                  push: true
+                  tags: ${{ vars.REGISTRY_URL }}:${{ env.TAG }}
+                  cache-from: type=registry,ref=${{ vars.REGISTRY_URL }}:buildcache
+                  cache-to: type=registry,ref=${{ vars.REGISTRY_URL }}:buildcache,mode=max
+                  build-args: |
+                      COMMIT_HASH=${{ github.sha }}
+                      BUILD_DATE=${{ github.run_started_at }}
 
             # - name: Call n8n webhook
             #   run: |
