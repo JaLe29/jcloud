@@ -9,7 +9,7 @@ import {
 import dayjs from 'dayjs';
 import { trpc } from '../utils/trpc';
 import { ServiceApiKey } from '../components/features/ServiceApiKey';
-import { ApiKeyUsageHistory } from '../components/features/ApiKeyUsageHistory';
+import { ApiDeployHistory } from '../components/features/ApiDeployHistory';
 
 const { Title, Text } = Typography;
 
@@ -152,7 +152,7 @@ export const ServiceDetailPage = () => {
 				<ServiceApiKey serviceId={service.id} />
 			</Card>
 
-			<ApiKeyUsageHistory serviceId={service.id} />
+			<ApiDeployHistory serviceId={service.id} />
 
 			<Card title="Environment Variables">
 				<Space direction="vertical" style={{ width: '100%' }}>

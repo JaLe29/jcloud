@@ -108,7 +108,7 @@ export const applicationRouter = (router: Router, procedure: Procedure) => {
 								},
 								apiKey: {
 									include: {
-										usages: {
+										deploys: {
 											orderBy: { createdAt: 'desc' },
 											take: 1,
 										},

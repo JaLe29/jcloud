@@ -10,7 +10,7 @@ function generateApiKey(): string {
 	return crypto.randomBytes(32).toString('hex');
 }
 
-const usagePaginationSchema = createPaginationInputSchema(
+const deployPaginationSchema = createPaginationInputSchema(
 	['createdAt'] as const,
 	z.object({ serviceId: z.string().uuid() }).optional(),
 );
@@ -114,13 +114,11 @@ export const apikeyRouter = (router: Router, procedure: Procedure) => {
 				return { success: true };
 			}),
 
-		recordUsage: procedure
+		recordDeploy: procedure
 			.input(
 				z.object({
 					key: z.string(),
-					ipAddress: z.string().optional(),
-					userAgent: z.string().optional(),
-					endpoint: z.string().optional(),
+					image: z.string(),
 				}),
 			)
 			.mutation(async ({ ctx, input }) => {
@@ -136,21 +134,19 @@ export const apikeyRouter = (router: Router, procedure: Procedure) => {
 					});
 				}
 
-				// Record usage
-				const usage = await ctx.prisma.apiKeyUsage.create({
+				// Record deployment
+				const deploy = await ctx.prisma.apiDeploy.create({
 					data: {
 						apiKeyId: apiKey.id,
-						ipAddress: input.ipAddress,
-						userAgent: input.userAgent,
-						endpoint: input.endpoint,
+						image: input.image,
 					},
 				});
 
-				return usage;
+				return deploy;
 			}),
 
-		getUsageHistory: procedure
-			.input(usagePaginationSchema)
+		getDeployHistory: procedure
+			.input(deployPaginationSchema)
 			.query(async ({ ctx, input }) => {
 				const { page, limit, skip, take } = getPaginationParams(input);
 
@@ -168,18 +164,18 @@ export const apikeyRouter = (router: Router, procedure: Procedure) => {
 
 				if (!apiKey) {
 					return {
-						usages: [],
+						deploys: [],
 						pagination: getPaginationMeta(page, limit, 0),
 					};
 				}
 
-				const where: Prisma.ApiKeyUsageWhereInput = {
+				const where: Prisma.ApiDeployWhereInput = {
 					apiKeyId: apiKey.id,
 				};
 
-				const total = await ctx.prisma.apiKeyUsage.count({ where });
+				const total = await ctx.prisma.apiDeploy.count({ where });
 
-				const usages = await ctx.prisma.apiKeyUsage.findMany({
+				const deploys = await ctx.prisma.apiDeploy.findMany({
 					where,
 					skip,
 					take,
@@ -187,7 +183,7 @@ export const apikeyRouter = (router: Router, procedure: Procedure) => {
 				});
 
 				return {
-					usages,
+					deploys,
 					pagination: getPaginationMeta(page, limit, total),
 				};
 			}),

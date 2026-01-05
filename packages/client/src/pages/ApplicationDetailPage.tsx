@@ -27,7 +27,7 @@ interface ServiceData {
 	envs?: Array<{ id: string }>;
 	apiKey?: {
 		id: string;
-		usages: Array<{ id: string; createdAt: Date }>;
+		deploys: Array<{ id: string; createdAt: Date }>;
 	} | null;
 }
 
@@ -164,9 +164,9 @@ export const ApplicationDetailPage = () => {
 			key: 'lastDeploy',
 			width: 140,
 			render: (_, record) => {
-				const lastUsage = record.apiKey?.usages?.[0];
-				return lastUsage ? (
-					<Text type="secondary">{dayjs(lastUsage.createdAt).format('DD.MM.YYYY HH:mm')}</Text>
+				const lastDeploy = record.apiKey?.deploys?.[0];
+				return lastDeploy ? (
+					<Text type="secondary">{dayjs(lastDeploy.createdAt).format('DD.MM.YYYY HH:mm')}</Text>
 				) : (
 					<Text type="secondary">Never</Text>
 				);
