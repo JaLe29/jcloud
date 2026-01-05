@@ -61,10 +61,11 @@ export class Server {
 				const parseResult = deploySchema.safeParse(request.body);
 
 				if (!parseResult.success) {
+					// biome-ignore lint/suspicious/noConsole: error message
+					console.log( parseResult.error.issues.map(issue => issue.message).join(', '));
 					return reply.code(400).send({
 						error: 'Bad Request',
 						message: 'Invalid request body',
-						details: parseResult.error.errors
 					});
 				}
 

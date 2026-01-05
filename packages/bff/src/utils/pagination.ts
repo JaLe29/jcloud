@@ -40,7 +40,7 @@ export const createPaginationInputSchema = <
 			limit: z.number().int().min(1).max(PAGINATION_DEFAULTS.maxLimit).default(PAGINATION_DEFAULTS.limit).optional(),
 			sortBy: z.enum(sortableFields).optional(),
 			sortOrder: z.enum(['asc', 'desc']).optional(),
-			filter: filterSchema ?? z.undefined(),
+			filter: (filterSchema ?? z.undefined()).optional(),
 		})
 		.optional();
 };
