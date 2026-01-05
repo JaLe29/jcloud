@@ -14,6 +14,8 @@ COPY ./packages/bff 												./packages/bff
 COPY ./packages/client												./packages/client
 COPY ./packages/db												./packages/db
 
+ENV DATABASE_URL=dockerbuildisempty
+
 RUN yarn install && \
 	yarn workspace @jcloud/db prisma:generate && \
 	yarn workspace @jcloud/client build && \
