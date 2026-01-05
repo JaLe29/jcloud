@@ -1,5 +1,5 @@
 import { Table, Typography, Space, Alert, Card, Input, Button, Tag } from 'antd';
-import { SearchOutlined, PlusOutlined, AppstoreOutlined } from '@ant-design/icons';
+import { SearchOutlined, PlusOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useState, useEffect } from 'react';
@@ -57,11 +57,7 @@ export const ApplicationsPage = () => {
 			title: 'Name',
 			dataIndex: 'name',
 			key: 'name',
-			render: (text: string) => (
-				<Text strong style={{ color: '#0ea5e9' }}>
-					{text}
-				</Text>
-			),
+			render: (text: string) => <Text strong>{text}</Text>,
 			sorter: true,
 			sortOrder: table.getSortOrder('name'),
 			sortDirections: ['descend', 'ascend'],
@@ -70,9 +66,7 @@ export const ApplicationsPage = () => {
 			title: 'Namespace',
 			dataIndex: 'namespace',
 			key: 'namespace',
-			render: (text: string) => (
-				<Tag color="blue">{text}</Tag>
-			),
+			render: (text: string) => <Tag>{text}</Tag>,
 			sorter: true,
 			sortOrder: table.getSortOrder('namespace'),
 			sortDirections: ['descend', 'ascend'],
@@ -81,11 +75,11 @@ export const ApplicationsPage = () => {
 			title: 'Services',
 			key: 'servicesCount',
 			render: (_, record) => (
-				<Text strong style={{ color: record._count.services > 0 ? '#10b981' : '#94a3b8' }}>
+				<Text type={record._count.services > 0 ? undefined : 'secondary'}>
 					{record._count.services}
 				</Text>
 			),
-			width: 140,
+			width: 100,
 			align: 'center',
 			sorter: true,
 			sortOrder: table.getSortOrder('servicesCount'),
@@ -96,12 +90,7 @@ export const ApplicationsPage = () => {
 			dataIndex: 'createdAt',
 			key: 'createdAt',
 			render: (date: Date) => (
-				<Space direction="vertical" size={0}>
-					<Text>{dayjs(date).format('DD.MM.YYYY')}</Text>
-					<Text type="secondary" style={{ fontSize: 12 }}>
-						{dayjs(date).format('HH:mm:ss')}
-					</Text>
-				</Space>
+				<Text type="secondary">{dayjs(date).format('DD.MM.YYYY HH:mm')}</Text>
 			),
 			sorter: true,
 			sortOrder: table.getSortOrder('createdAt'),
@@ -115,34 +104,24 @@ export const ApplicationsPage = () => {
 
 	return (
 		<Space direction="vertical" size="large" style={{ width: '100%' }}>
-			<Space
-				direction="horizontal"
-				size="middle"
-				style={{ width: '100%', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}
-			>
+			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
 				<div>
-					<Title level={2} style={{ marginBottom: 8 }}>
-						<AppstoreOutlined style={{ marginRight: 12, color: '#0ea5e9' }} />
-						Applications
-					</Title>
+					<Title level={2} style={{ marginBottom: 4 }}>Applications</Title>
 					{data?.pagination && (
-						<Text type="secondary" style={{ fontSize: 15 }}>
-							Total Applications: <Text strong style={{ color: '#0ea5e9' }}>{data.pagination.total}</Text>
+						<Text type="secondary">
+							{data.pagination.total} application{data.pagination.total !== 1 ? 's' : ''}
 						</Text>
 					)}
 				</div>
 
 				<Space wrap>
 					<Input
-						placeholder="Search by name..."
-						prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+						placeholder="Search..."
+						prefix={<SearchOutlined style={{ opacity: 0.5 }} />}
 						allowClear
 						value={searchValue}
 						onChange={(e) => setSearchValue(e.target.value)}
-						style={{
-							width: 240,
-							borderRadius: 8,
-						}}
+						style={{ width: 200 }}
 					/>
 					<Button
 						type="primary"
@@ -152,9 +131,9 @@ export const ApplicationsPage = () => {
 						New Application
 					</Button>
 				</Space>
-			</Space>
+			</div>
 
-			<Card bordered={false} style={{ borderRadius: 12 }}>
+			<Card>
 				<Table
 					columns={columns}
 					dataSource={data?.applications || []}
@@ -170,15 +149,10 @@ export const ApplicationsPage = () => {
 						current: table.page,
 						pageSize: table.pageSize,
 						showSizeChanger: true,
-						showTotal: (total, range) => (
-							<Text type="secondary">
-								Showing <Text strong>{range[0]}-{range[1]}</Text> of <Text strong>{total}</Text> applications
-							</Text>
-						),
+						showTotal: (total) => `${total} items`,
 					}}
 				/>
 			</Card>
 		</Space>
 	);
 };
-

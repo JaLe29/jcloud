@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Layout as AntLayout, Menu, Typography, theme, Button } from 'antd';
-import { AppstoreOutlined, HomeOutlined, MenuOutlined } from '@ant-design/icons';
+import { Layout as AntLayout, Menu, Typography, Button } from 'antd';
+import { AppstoreOutlined, HomeOutlined, MenuOutlined, LockOutlined } from '@ant-design/icons';
 import type React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const { Header, Sider, Content } = AntLayout;
-const { Title } = Typography;
+const { Text } = Typography;
 
 interface LayoutProps {
 	children: React.ReactNode;
@@ -15,26 +15,31 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 	const navigate = useNavigate();
 	const location = useLocation();
 	const [collapsed, setCollapsed] = useState(false);
-	const {
-		token: { colorBgContainer, borderRadiusLG },
-	} = theme.useToken();
 
 	const menuItems = [
 		{
 			key: '/',
 			icon: <HomeOutlined />,
-			label: 'Home',
+			label: 'Dashboard',
 		},
 		{
 			key: '/applications',
 			icon: <AppstoreOutlined />,
 			label: 'Applications',
 		},
+		{
+			key: '/envs',
+			icon: <LockOutlined />,
+			label: 'Env Variables',
+		},
 	];
 
 	const getSelectedKey = () => {
 		if (location.pathname.startsWith('/applications')) {
 			return '/applications';
+		}
+		if (location.pathname.startsWith('/envs')) {
+			return '/envs';
 		}
 		return location.pathname;
 	};
@@ -53,6 +58,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 				collapsedWidth="0"
 				collapsed={collapsed}
 				onCollapse={(value) => setCollapsed(value)}
+				width={220}
 				style={{
 					overflow: 'auto',
 					height: '100vh',
@@ -61,79 +67,53 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 					top: 0,
 					bottom: 0,
 					zIndex: 999,
-					background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 100%)',
+					borderRight: '1px solid #f0f0f0',
 				}}
 			>
 				<div
 					style={{
 						height: '64px',
-						margin: '16px',
 						display: 'flex',
 						alignItems: 'center',
-						justifyContent: 'center',
-						padding: '0 16px',
+						padding: '0 24px',
+						borderBottom: '1px solid #f0f0f0',
 					}}
 				>
-					<Title level={4} style={{ color: 'white', margin: 0, whiteSpace: 'nowrap' }}>
-						☁️ JCloud
-					</Title>
+					<Text style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.5px' }}>
+						JCloud
+					</Text>
 				</div>
 				<Menu
-					theme="dark"
 					mode="inline"
 					selectedKeys={[getSelectedKey()]}
 					items={menuItems}
 					onClick={({ key }) => handleMenuClick(key)}
-					style={{ background: 'transparent' }}
+					style={{ border: 'none', marginTop: 8 }}
 				/>
 			</Sider>
-			<AntLayout style={{ marginLeft: collapsed ? 0 : 200, transition: 'margin-left 0.2s' }}>
+			<AntLayout style={{ marginLeft: collapsed ? 0 : 220, transition: 'margin-left 0.2s' }}>
 				<Header
 					style={{
 						padding: '0 24px',
-						background: '#ffffff',
 						display: 'flex',
 						alignItems: 'center',
 						justifyContent: 'space-between',
-						boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
 						position: 'sticky',
 						top: 0,
 						zIndex: 998,
-						borderBottom: '1px solid #e5e7eb',
+						borderBottom: '1px solid #f0f0f0',
 					}}
 				>
-					<div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+					<div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
 						<Button
 							type="text"
 							icon={<MenuOutlined />}
 							onClick={() => setCollapsed(!collapsed)}
-							style={{ fontSize: '18px', color: '#0ea5e9' }}
 						/>
-						<Title
-							level={3}
-							style={{
-								margin: 0,
-								color: '#0ea5e9',
-								fontWeight: 700,
-							}}
-						>
-							Kubernetes Manager
-						</Title>
 					</div>
 				</Header>
-				<Content style={{ margin: '24px 16px', overflow: 'initial' }}>
-					<div
-						style={{
-							padding: 24,
-							background: colorBgContainer,
-							borderRadius: borderRadiusLG,
-							minHeight: 'calc(100vh - 112px)',
-							boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
-							border: '1px solid #e2e8f0',
-						}}
-					>
-						{children}
-					</div>
+				<Content style={{ padding: 24 }}>
+					{children}
 				</Content>
 			</AntLayout>
 		</AntLayout>

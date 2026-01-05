@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { Card, Typography, Space, Button, Form, Input, message, Spin } from 'antd';
-import { ArrowLeftOutlined, SaveOutlined, AppstoreOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
 import { useEffect } from 'react';
 import { trpc } from '../utils/trpc';
 
@@ -29,24 +29,24 @@ export const ApplicationFormPage = () => {
 
 	const createMutation = trpc.application.create.useMutation({
 		onSuccess: (data) => {
-			message.success('Application created successfully');
+			message.success('Application created');
 			utils.application.list.invalidate();
 			navigate(`/applications/${data.id}`);
 		},
 		onError: (error) => {
-			message.error(`Failed to create application: ${error.message}`);
+			message.error(error.message);
 		},
 	});
 
 	const updateMutation = trpc.application.update.useMutation({
 		onSuccess: () => {
-			message.success('Application updated successfully');
+			message.success('Application updated');
 			utils.application.list.invalidate();
 			utils.application.getById.invalidate({ id: id! });
 			navigate(`/applications/${id}`);
 		},
 		onError: (error) => {
-			message.error(`Failed to update application: ${error.message}`);
+			message.error(error.message);
 		},
 	});
 
@@ -75,11 +75,9 @@ export const ApplicationFormPage = () => {
 	if (isEditing && isLoadingApplication) {
 		return (
 			<Space direction="vertical" size="large" style={{ width: '100%' }}>
-				<Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
-					Back
-				</Button>
-				<Card style={{ borderRadius: 12, textAlign: 'center', padding: 40 }}>
-					<Spin size="large" />
+				<Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>Back</Button>
+				<Card style={{ textAlign: 'center', padding: 40 }}>
+					<Spin />
 				</Card>
 			</Space>
 		);
@@ -87,68 +85,46 @@ export const ApplicationFormPage = () => {
 
 	return (
 		<Space direction="vertical" size="large" style={{ width: '100%' }}>
-			<Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
-				Back
-			</Button>
+			<Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>Back</Button>
 
-			<Card
-				bordered={false}
-				style={{
-					borderRadius: 12,
-					maxWidth: 600,
-				}}
-			>
+			<Card style={{ maxWidth: 500 }}>
 				<Space direction="vertical" size="large" style={{ width: '100%' }}>
-					<div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-						<AppstoreOutlined style={{ fontSize: 28, color: '#0ea5e9' }} />
-						<div>
-							<Title level={3} style={{ margin: 0, color: '#0ea5e9' }}>
-								{isEditing ? 'Edit Application' : 'Create New Application'}
-							</Title>
-							<Text type="secondary">
-								{isEditing
-									? 'Update the application details below'
-									: 'Fill in the details to create a new application'}
-							</Text>
-						</div>
+					<div>
+						<Title level={3} style={{ marginBottom: 4 }}>
+							{isEditing ? 'Edit Application' : 'New Application'}
+						</Title>
+						<Text type="secondary">
+							{isEditing ? 'Update application details' : 'Create a new application'}
+						</Text>
 					</div>
 
 					<Form
 						form={form}
 						layout="vertical"
 						onFinish={handleSubmit}
-						requiredMark="optional"
+						requiredMark={false}
 					>
 						<Form.Item
-							label="Application Name"
+							label="Name"
 							name="name"
 							rules={[
-								{ required: true, message: 'Please enter application name' },
-								{ min: 1, max: 100, message: 'Name must be between 1 and 100 characters' },
+								{ required: true, message: 'Required' },
+								{ max: 100, message: 'Max 100 characters' },
 							]}
 						>
-							<Input
-								placeholder="e.g., my-awesome-app"
-								size="large"
-								style={{ borderRadius: 8 }}
-							/>
+							<Input placeholder="my-app" />
 						</Form.Item>
 
 						<Form.Item
 							label="Namespace"
 							name="namespace"
 							rules={[
-								{ required: !isEditing, message: 'Please enter namespace' },
-								{ min: 1, max: 100, message: 'Namespace must be between 1 and 100 characters' },
+								{ required: !isEditing, message: 'Required' },
+								{ max: 100, message: 'Max 100 characters' },
 							]}
-							extra={isEditing ? 'Namespace cannot be changed after creation' : undefined}
+							extra={isEditing ? 'Cannot be changed' : undefined}
 						>
-							<Input
-								placeholder="e.g., production"
-								size="large"
-								style={{ borderRadius: 8 }}
-								disabled={isEditing}
-							/>
+							<Input placeholder="production" disabled={isEditing} />
 						</Form.Item>
 
 						<Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
@@ -158,13 +134,10 @@ export const ApplicationFormPage = () => {
 									htmlType="submit"
 									icon={<SaveOutlined />}
 									loading={isPending}
-									size="large"
 								>
-									{isEditing ? 'Update Application' : 'Create Application'}
+									{isEditing ? 'Save' : 'Create'}
 								</Button>
-								<Button size="large" onClick={() => navigate(-1)}>
-									Cancel
-								</Button>
+								<Button onClick={() => navigate(-1)}>Cancel</Button>
 							</Space>
 						</Form.Item>
 					</Form>

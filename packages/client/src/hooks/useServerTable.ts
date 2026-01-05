@@ -53,19 +53,20 @@ export interface ServerTableState<F = any> {
 	filter?: F;
 }
 
-export interface ServerTableConfig {
+export interface ServerTableConfig<F = any> {
 	initialPage?: number;
 	initialPageSize?: number;
 	initialSortBy?: string;
 	initialSortOrder?: SortOrder;
+	initialFilter?: F;
 }
 
-export const useServerTable = <T extends Record<string, any>, F = any>(config?: ServerTableConfig) => {
+export const useServerTable = <T extends Record<string, any>, F = any>(config?: ServerTableConfig<F>) => {
 	const [page, setPage] = useState(config?.initialPage ?? 1);
 	const [pageSize, setPageSize] = useState(config?.initialPageSize ?? 10);
 	const [sortBy, setSortBy] = useState<string | undefined>(config?.initialSortBy);
 	const [sortOrder, setSortOrder] = useState<SortOrder | undefined>(config?.initialSortOrder);
-	const [filter, setFilter] = useState<F | undefined>();
+	const [filter, setFilter] = useState<F | undefined>(config?.initialFilter);
 
 	const queryParams: ServerTableState<F> = {
 		page,

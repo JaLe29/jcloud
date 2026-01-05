@@ -1,5 +1,5 @@
 import { Typography, Space, Alert, Card, Row, Col, Statistic, Button, Table, Tag } from 'antd';
-import { CloudServerOutlined, AppstoreOutlined, PlusOutlined, RocketOutlined } from '@ant-design/icons';
+import { CloudServerOutlined, AppstoreOutlined, PlusOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
@@ -26,23 +26,19 @@ export const HomePage = () => {
 			title: 'Name',
 			dataIndex: 'name',
 			key: 'name',
-			render: (text: string) => (
-				<Text strong style={{ color: '#0ea5e9' }}>
-					{text}
-				</Text>
-			),
+			render: (text: string) => <Text strong>{text}</Text>,
 		},
 		{
 			title: 'Namespace',
 			dataIndex: 'namespace',
 			key: 'namespace',
-			render: (text: string) => <Tag color="blue">{text}</Tag>,
+			render: (text: string) => <Tag>{text}</Tag>,
 		},
 		{
 			title: 'Services',
 			key: 'servicesCount',
 			render: (_, record) => (
-				<Text strong style={{ color: record._count.services > 0 ? '#10b981' : '#94a3b8' }}>
+				<Text type={record._count.services > 0 ? undefined : 'secondary'}>
 					{record._count.services}
 				</Text>
 			),
@@ -54,18 +50,14 @@ export const HomePage = () => {
 			dataIndex: 'createdAt',
 			key: 'createdAt',
 			render: (date: Date) => (
-				<Text type="secondary" style={{ fontSize: 13 }}>
-					{dayjs(date).format('DD.MM.YYYY')}
-				</Text>
+				<Text type="secondary">{dayjs(date).format('DD.MM.YYYY')}</Text>
 			),
 		},
 	];
 
 	if (error) {
 		return (
-			<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-				<Alert message="Error" description={error.message} type="error" showIcon />
-			</div>
+			<Alert message="Error" description={error.message} type="error" showIcon />
 		);
 	}
 
@@ -75,18 +67,12 @@ export const HomePage = () => {
 		<Space direction="vertical" size="large" style={{ width: '100%' }}>
 			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
 				<div>
-					<Title level={2} style={{ marginBottom: 8 }}>
-						<RocketOutlined style={{ marginRight: 12, color: '#0ea5e9' }} />
-						JCloud Dashboard
-					</Title>
-					<Text type="secondary" style={{ fontSize: 15 }}>
-						Manage your Kubernetes applications and services
-					</Text>
+					<Title level={2} style={{ marginBottom: 4 }}>Dashboard</Title>
+					<Text type="secondary">Overview of your applications and services</Text>
 				</div>
 				<Button
 					type="primary"
 					icon={<PlusOutlined />}
-					size="large"
 					onClick={() => navigate('/applications/new')}
 				>
 					New Application
@@ -95,73 +81,40 @@ export const HomePage = () => {
 
 			<Row gutter={[16, 16]}>
 				<Col xs={24} sm={12} lg={8}>
-					<Card
-						bordered={false}
-						style={{
-							borderRadius: 12,
-							background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
-							border: '1px solid #bae6fd',
-						}}
-						hoverable
-						onClick={() => navigate('/applications')}
-					>
+					<Card hoverable onClick={() => navigate('/applications')}>
 						<Statistic
-							title={<Text style={{ color: '#0369a1' }}>Total Applications</Text>}
+							title="Applications"
 							value={data?.pagination?.total || 0}
-							prefix={<AppstoreOutlined style={{ color: '#0ea5e9' }} />}
-							valueStyle={{ color: '#0284c7' }}
+							prefix={<AppstoreOutlined />}
 						/>
 					</Card>
 				</Col>
 				<Col xs={24} sm={12} lg={8}>
-					<Card
-						bordered={false}
-						style={{
-							borderRadius: 12,
-							background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
-							border: '1px solid #86efac',
-						}}
-					>
+					<Card>
 						<Statistic
-							title={<Text style={{ color: '#166534' }}>Total Services</Text>}
+							title="Services"
 							value={totalServices}
-							prefix={<CloudServerOutlined style={{ color: '#10b981' }} />}
-							valueStyle={{ color: '#16a34a' }}
+							prefix={<CloudServerOutlined />}
 						/>
 					</Card>
 				</Col>
 				<Col xs={24} sm={12} lg={8}>
-					<Card
-						bordered={false}
-						style={{
-							borderRadius: 12,
-							background: 'linear-gradient(135deg, #fdf4ff 0%, #fae8ff 100%)',
-							border: '1px solid #e879f9',
-						}}
-					>
+					<Card>
 						<Statistic
-							title={<Text style={{ color: '#86198f' }}>Avg Services per App</Text>}
+							title="Avg Services / App"
 							value={data?.pagination?.total ? (totalServices / data.pagination.total).toFixed(1) : 0}
-							valueStyle={{ color: '#a21caf' }}
 						/>
 					</Card>
 				</Col>
 			</Row>
 
 			<Card
-				title={
-					<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-						<Space>
-							<AppstoreOutlined style={{ color: '#0ea5e9' }} />
-							<span>Recent Applications</span>
-						</Space>
-						<Button type="link" onClick={() => navigate('/applications')}>
-							View All →
-						</Button>
-					</div>
+				title="Recent Applications"
+				extra={
+					<Button type="link" onClick={() => navigate('/applications')}>
+						View All
+					</Button>
 				}
-				bordered={false}
-				style={{ borderRadius: 12 }}
 			>
 				<Table
 					columns={columns}
@@ -176,7 +129,7 @@ export const HomePage = () => {
 					locale={{
 						emptyText: (
 							<Space direction="vertical" size="middle" style={{ padding: 40 }}>
-								<AppstoreOutlined style={{ fontSize: 48, color: '#d1d5db' }} />
+								<AppstoreOutlined style={{ fontSize: 40, opacity: 0.3 }} />
 								<Text type="secondary">No applications yet</Text>
 								<Button
 									type="primary"
@@ -186,7 +139,7 @@ export const HomePage = () => {
 										navigate('/applications/new');
 									}}
 								>
-									Create Your First Application
+									Create Application
 								</Button>
 							</Space>
 						),

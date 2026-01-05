@@ -73,6 +73,13 @@ export const applicationRouter = (router: Router, procedure: Procedure) => {
 					take,
 					orderBy,
 					include: {
+						services: {
+							select: {
+								id: true,
+								name: true,
+							},
+							orderBy: { name: 'asc' },
+						},
 						_count: {
 							select: {
 								services: true,
@@ -95,6 +102,11 @@ export const applicationRouter = (router: Router, procedure: Procedure) => {
 					include: {
 						services: {
 							orderBy: { createdAt: 'desc' },
+							include: {
+								envs: {
+									select: { id: true },
+								},
+							},
 						},
 						_count: {
 							select: {

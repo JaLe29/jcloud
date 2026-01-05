@@ -8,6 +8,7 @@ import { ApplicationsPage } from './pages/ApplicationsPage';
 import { ApplicationDetailPage } from './pages/ApplicationDetailPage';
 import { ApplicationFormPage } from './pages/ApplicationFormPage';
 import { ServiceFormPage } from './pages/ServiceFormPage';
+import { EnvsPage } from './pages/EnvsPage';
 import { trpc, trpcClient } from './utils/trpc';
 import './global.css';
 
@@ -77,6 +78,14 @@ export const App: React.FC = () => {
 				</Layout>
 			),
 		},
+		{
+			path: '/envs',
+			element: (
+				<Layout>
+					<EnvsPage />
+				</Layout>
+			),
+		},
 	]);
 
 	return (
@@ -84,28 +93,38 @@ export const App: React.FC = () => {
 			theme={{
 				algorithm: theme.defaultAlgorithm,
 				token: {
-					colorPrimary: '#0ea5e9',
-					colorSuccess: '#10b981',
-					colorWarning: '#f59e0b',
-					colorError: '#ef4444',
-					colorInfo: '#0ea5e9',
-					borderRadius: 8,
+					colorPrimary: '#1677ff',
+					colorSuccess: '#52c41a',
+					colorWarning: '#faad14',
+					colorError: '#ff4d4f',
+					colorInfo: '#1677ff',
+					colorBgContainer: '#ffffff',
+					colorBgLayout: '#f5f5f5',
+					colorBorder: '#d9d9d9',
+					borderRadius: 6,
 					fontSize: 14,
 				},
 				components: {
 					Layout: {
 						headerBg: '#ffffff',
-						siderBg: '#0f172a',
-						bodyBg: '#f8fafc',
+						siderBg: '#ffffff',
+						bodyBg: '#f5f5f5',
 					},
 					Menu: {
-						darkItemBg: 'transparent',
-						darkItemSelectedBg: '#0ea5e9',
-						darkItemHoverBg: '#334155',
+						itemBg: 'transparent',
+						itemSelectedBg: '#e6f4ff',
+						itemHoverBg: '#f5f5f5',
+						itemSelectedColor: '#1677ff',
 					},
 					Table: {
-						headerBg: '#f8fafc',
-						rowHoverBg: '#f0f9ff',
+						headerBg: '#fafafa',
+						rowHoverBg: '#fafafa',
+					},
+					Card: {
+						colorBgContainer: '#ffffff',
+					},
+					Button: {
+						primaryShadow: 'none',
 					},
 				},
 			}}
