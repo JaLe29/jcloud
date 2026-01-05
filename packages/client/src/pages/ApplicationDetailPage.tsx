@@ -142,15 +142,26 @@ export const ApplicationDetailPage = () => {
 			),
 		},
 		{
-			title: 'Env Vars',
+			title: 'Vars',
 			key: 'envs',
 			width: 80,
+			align: 'center',
 			render: (_, record) => {
 				const count = record.envs?.length ?? 0;
 				return count > 0 ? (
-					<Tag icon={<LockOutlined />}>{count}</Tag>
+					<Button
+						type="text"
+						size="small"
+						icon={<LockOutlined />}
+						onClick={(e) => {
+							e.stopPropagation();
+							navigate(`/envs?serviceId=${record.id}`);
+						}}
+					>
+						{count}
+					</Button>
 				) : (
-					<Text type="secondary">0</Text>
+					<Text type="secondary">-</Text>
 				);
 			},
 		},

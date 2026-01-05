@@ -146,11 +146,19 @@ export const envRouter = (router: Router, procedure: Procedure) => {
 					});
 				}
 
-				return {
-					...env,
-					value: decrypt(env.value),
-					services: env.services.map((s) => s.service),
-				};
+				try {
+					return {
+						...env,
+						value: decrypt(env.value),
+						services: env.services.map((s) => s.service),
+					};
+				} catch (error) {
+					throw new TRPCError({
+						code: 'INTERNAL_SERVER_ERROR',
+						message: error instanceof Error ? error.message : 'Failed to decrypt environment variable value',
+						cause: error,
+					});
+				}
 			}),
 
 		getByServiceId: procedure
@@ -172,17 +180,6 @@ export const envRouter = (router: Router, procedure: Procedure) => {
 		create: procedure
 			.input(createEnvSchema)
 			.mutation(async ({ ctx, input }) => {
-				const existing = await ctx.prisma.env.findUnique({
-					where: { key: input.key },
-				});
-
-				if (existing) {
-					throw new TRPCError({
-						code: 'CONFLICT',
-						message: 'Environment variable with this key already exists',
-					});
-				}
-
 				const encryptedValue = encrypt(input.value);
 
 				const env = await ctx.prisma.env.create({
@@ -216,19 +213,6 @@ export const envRouter = (router: Router, procedure: Procedure) => {
 						code: 'NOT_FOUND',
 						message: 'Environment variable not found',
 					});
-				}
-
-				if (data.key && data.key !== existing.key) {
-					const keyExists = await ctx.prisma.env.findUnique({
-						where: { key: data.key },
-					});
-
-					if (keyExists) {
-						throw new TRPCError({
-							code: 'CONFLICT',
-							message: 'Environment variable with this key already exists',
-						});
-					}
 				}
 
 				// Encrypt value if provided

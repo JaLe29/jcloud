@@ -69,11 +69,11 @@ export const EnvsPage = () => {
 		const timer = setTimeout(() => {
 			const trimmed = searchValue.trim();
 			const newFilter: EnvFilter = {};
-			
+
 			if (trimmed) newFilter.key = trimmed;
 			if (selectedServiceId) newFilter.serviceId = selectedServiceId;
 			if (selectedApplicationId && !selectedServiceId) newFilter.applicationId = selectedApplicationId;
-			
+
 			table.handleFilterChange(Object.keys(newFilter).length > 0 ? newFilter : undefined);
 		}, 300);
 
@@ -85,7 +85,7 @@ export const EnvsPage = () => {
 		const params = new URLSearchParams();
 		if (selectedServiceId) params.set('serviceId', selectedServiceId);
 		else if (selectedApplicationId) params.set('applicationId', selectedApplicationId);
-		
+
 		setSearchParams(params, { replace: true });
 	}, [selectedServiceId, selectedApplicationId, setSearchParams]);
 
@@ -101,11 +101,18 @@ export const EnvsPage = () => {
 
 	const { data: envDetail } = trpc.env.getById.useQuery(
 		{ id: editingEnv?.id ?? '' },
-		{ enabled: !!editingEnv },
+		{
+			enabled: !!editingEnv,
+			retry: false,
+			onError: (error) => {
+				message.error(error.message);
+				closeModal();
+			},
+		},
 	);
 
 	// Build application options
-	const applicationOptions = useMemo(() => 
+	const applicationOptions = useMemo(() =>
 		applicationsData?.applications.map((app) => ({
 			label: app.name,
 			value: app.id,
@@ -115,11 +122,11 @@ export const EnvsPage = () => {
 	// Build service options - all services or filtered by selected application
 	const serviceOptions = useMemo(() => {
 		if (!applicationsData) return [];
-		
-		const apps = selectedApplicationId 
+
+		const apps = selectedApplicationId
 			? applicationsData.applications.filter(app => app.id === selectedApplicationId)
 			: applicationsData.applications;
-		
+
 		return apps.flatMap((app) =>
 			app.services.map((service) => ({
 				label: `${app.name} / ${service.name}`,
@@ -129,7 +136,7 @@ export const EnvsPage = () => {
 	}, [applicationsData, selectedApplicationId]);
 
 	// All service options for the form
-	const allServiceOptions = useMemo(() => 
+	const allServiceOptions = useMemo(() =>
 		applicationsData?.applications.flatMap((app) =>
 			app.services.map((service) => ({
 				label: `${app.name} / ${service.name}`,

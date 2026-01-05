@@ -49,7 +49,7 @@ model Service {
 
 model Env {
   id    String @id @default(uuid())
-  key   String @unique
+  key   String
   value String // Encrypted value
 
   createdAt DateTime @default(now())
