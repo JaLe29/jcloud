@@ -10,6 +10,7 @@ import { ApplicationFormPage } from './pages/ApplicationFormPage';
 import { ServiceDetailPage } from './pages/ServiceDetailPage';
 import { ServiceFormPage } from './pages/ServiceFormPage';
 import { EnvsPage } from './pages/EnvsPage';
+import { DockerSecretsPage } from './pages/DockerSecretsPage';
 import { trpc, trpcClient } from './utils/trpc';
 import './global.css';
 
@@ -92,6 +93,14 @@ export const App: React.FC = () => {
 			element: (
 				<Layout>
 					<EnvsPage />
+				</Layout>
+			),
+		},
+		{
+			path: '/docker-secrets',
+			element: (
+				<Layout>
+					<DockerSecretsPage />
 				</Layout>
 			),
 		},

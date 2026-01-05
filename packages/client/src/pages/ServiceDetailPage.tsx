@@ -10,6 +10,7 @@ import dayjs from 'dayjs';
 import { trpc } from '../utils/trpc';
 import { ServiceApiKey } from '../components/features/ServiceApiKey';
 import { ApiDeployHistory } from '../components/features/ApiDeployHistory';
+import { ServiceDockerSecrets } from '../components/features/ServiceDockerSecrets';
 
 const { Title, Text } = Typography;
 
@@ -151,6 +152,8 @@ export const ServiceDetailPage = () => {
 			<Card title="API Key">
 				<ServiceApiKey serviceId={service.id} />
 			</Card>
+
+			<ServiceDockerSecrets serviceId={service.id} />
 
 			<ApiDeployHistory serviceId={service.id} />
 

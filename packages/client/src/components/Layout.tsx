@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Layout as AntLayout, Menu, Typography, Button } from 'antd';
-import { AppstoreOutlined, HomeOutlined, MenuOutlined, LockOutlined } from '@ant-design/icons';
+import { AppstoreOutlined, HomeOutlined, MenuOutlined, LockOutlined, KeyOutlined } from '@ant-design/icons';
 import type React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -32,6 +32,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 			icon: <LockOutlined />,
 			label: 'Env Variables',
 		},
+		{
+			key: '/docker-secrets',
+			icon: <KeyOutlined />,
+			label: 'Docker Secrets',
+		},
 	];
 
 	const getSelectedKey = () => {
@@ -40,6 +45,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 		}
 		if (location.pathname.startsWith('/envs')) {
 			return '/envs';
+		}
+		if (location.pathname.startsWith('/docker-secrets')) {
+			return '/docker-secrets';
 		}
 		return location.pathname;
 	};

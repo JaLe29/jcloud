@@ -41,8 +41,9 @@ model Service {
   application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   applicationId String
 
-  envs   ServiceEnv[]
-  apiKey ApiKey?
+  envs          ServiceEnv[]
+  apiKey        ApiKey?
+  dockerSecrets ServiceDockerSecret[]
 
   @@unique([applicationId, name])
   @@index([applicationId])
@@ -101,4 +102,32 @@ model ApiDeploy {
 
   @@index([apiKeyId])
   @@index([createdAt])
+}
+
+model DockerSecret {
+  id       String @id @default(uuid())
+  name     String @unique
+  server   String // Docker registry server (e.g. docker.io, ghcr.io)
+  username String
+  password String // Encrypted password
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  services ServiceDockerSecret[]
+}
+
+model ServiceDockerSecret {
+  id String @id @default(uuid())
+
+  service        Service      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  serviceId      String
+  dockerSecret   DockerSecret @relation(fields: [dockerSecretId], references: [id], onDelete: Cascade)
+  dockerSecretId String
+
+  createdAt DateTime @default(now())
+
+  @@unique([serviceId, dockerSecretId])
+  @@index([serviceId])
+  @@index([dockerSecretId])
 }
