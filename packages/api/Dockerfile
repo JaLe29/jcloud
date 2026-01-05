@@ -16,9 +16,9 @@ COPY ./packages/db 													./packages/db
 ENV DATABASE_URL=dockerbuildisempty
 
 RUN yarn install && \
-	yarn workspace @jg/db prisma:generate && \
-	yarn workspace @jg/api build && \
-	yarn workspaces focus @jg/api --production
+	yarn workspace @jcloud/db prisma:generate && \
+	yarn workspace @jcloud/api build && \
+	yarn workspaces focus @jcloud/api --production
 
 # ### PRODUCTION
 FROM node:22-alpine
