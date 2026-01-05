@@ -1,0 +1,1 @@
+sh commit.sh && git pull --rebase && git push --no-verify

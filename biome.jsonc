@@ -1,0 +1,343 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.2.2/schema.json",
+	"vcs": {
+		"enabled": false,
+		"clientKind": "git",
+		"useIgnoreFile": false
+	},
+	"files": {
+		"ignoreUnknown": false,
+		"includes": [
+			"packages/**/*.tsx",
+			"packages/**/*.ts",
+			"**/commitlint.config.ts",
+			"**/knip.ts",
+			"**/vite/**/*.ts",
+			"**/vitest/**/*.ts",
+			"**/webpack/**/*.ts",
+			// Ignore
+			"!**/.yarn",
+			"!**/dist",
+			"!**/cache",
+			"!**/coverage",
+			"!**/node_modules",
+			"!**/.*",
+			"!**/*.js",
+			"!**/*.es6",
+			"!**/*.css.d.ts",
+			"!**/*.scss.d.ts",
+			"!**/*.css",
+			"!**/*.scss",
+			"!**/*.min.js",
+			"!**/*.types.generated.ts",
+			"!**/*.types.generated-*.ts",
+			"!**/fonts/**/*.json",
+			"!**/routeTree.gen.ts",
+			"!**/_generated",
+			"!packages/dc/dc-service-grpc/src/generated"
+		]
+	},
+	"assist": {
+		"actions": {
+			"source": {
+				"organizeImports": "on"
+			}
+		}
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"recommended": true,
+			"a11y": {
+				"noLabelWithoutControl": "off",
+				"useKeyWithClickEvents": "off"
+			},
+			"style": {
+				"noDefaultExport": "error",
+				"noInferrableTypes": "error",
+				"noNamespace": "error",
+				"noNestedTernary": "error",
+				"noNonNullAssertion": "off",
+				"noParameterAssign": "error",
+				"noRestrictedGlobals": {
+					"level": "off",
+					"options": {}
+				},
+				"noUnusedTemplateLiteral": "error",
+				"noUselessElse": "error",
+				"noYodaExpression": "error",
+				"useArrayLiterals": "off",
+				"useAsConstAssertion": "error",
+				"useBlockStatements": "error",
+				"useConst": "error",
+				"useDefaultParameterLast": "off",
+				"useDefaultSwitchClause": "off",
+				"useEnumInitializers": "error",
+				"useNodejsImportProtocol": "off",
+				"useNumberNamespace": "error",
+				"useSelfClosingElements": "error",
+				"useSingleVarDeclarator": "error",
+				"useTemplate": "error"
+			},
+			"complexity": {
+				"noAdjacentSpacesInRegex": "error",
+				"noArguments": "error",
+				"noBannedTypes": "off",
+				"noExtraBooleanCast": "error",
+				"noForEach": "off",
+				"noUselessCatch": "error",
+				"noUselessConstructor": "off",
+				"noUselessFragments": "error",
+				"noUselessRename": "error",
+				"noUselessStringConcat": "error",
+				"noUselessTypeConstraint": "error",
+				"useArrowFunction": "error",
+				"useRegexLiterals": "off"
+			},
+			"correctness": {
+				"noConstantCondition": "error",
+				"noConstAssign": "error",
+				"noConstructorReturn": "off",
+				"noEmptyCharacterClassInRegex": "error",
+				"noEmptyPattern": "error",
+				"noGlobalObjectCalls": "error",
+				"noInnerDeclarations": "error",
+				"noInvalidBuiltinInstantiation": "off",
+				"noInvalidConstructorSuper": "error",
+				"noInvalidUseBeforeDeclaration": "error",
+				"noNonoctalDecimalEscape": "error",
+				"noPrecisionLoss": "error",
+				"noSelfAssign": "error",
+				"noSetterReturn": "error",
+				"noSwitchDeclarations": "error",
+				"noUndeclaredVariables": "error",
+				"noUnreachable": "error",
+				"noUnreachableSuper": "error",
+				"noUnsafeFinally": "error",
+				"noUnsafeOptionalChaining": "error",
+				"noUnusedImports": "error",
+				"noUnusedLabels": "error",
+				"noUnusedVariables": "error",
+				"useExhaustiveDependencies": "error",
+				"useHookAtTopLevel": "error",
+				"useIsNan": "error",
+				"useJsxKeyInIterable": "error",
+				"useUniqueElementIds": "off",
+				"useValidForDirection": "error",
+				"useYield": "error",
+				"useValidTypeof": "error"
+			},
+			"suspicious": {
+				"noAsyncPromiseExecutor": "error",
+				"noCatchAssign": "error",
+				"noClassAssign": "error",
+				"noCompareNegZero": "error",
+				"noConfusingVoidType": "off",
+				"noConsole": "error",
+				"noControlCharactersInRegex": "error",
+				"noDebugger": "error",
+				"noDoubleEquals": "error",
+				"noDuplicateCase": "error",
+				"noDuplicateClassMembers": "error",
+				"noDuplicateFields": "error",
+				"noDuplicateObjectKeys": "error",
+				"noDuplicateParameters": "error",
+				"noEmptyBlockStatements": "error",
+				"noEmptyInterface": "off",
+				"noExplicitAny": "off",
+				"noExportsInTest": "off",
+				"noExtraNonNullAssertion": "error",
+				"noFallthroughSwitchClause": "error",
+				"noFocusedTests": "error",
+				"noFunctionAssign": "error",
+				"noGlobalAssign": "error",
+				"noImportAssign": "error",
+				"noMisleadingCharacterClass": "error",
+				"noMisleadingInstantiator": "error",
+				"noPrototypeBuiltins": "error",
+				"noRedeclare": "error",
+				"noSelfCompare": "error",
+				"noShadowRestrictedNames": "error",
+				"noSkippedTests": "error",
+				"noSparseArray": "error",
+				"noThenProperty": "error",
+				"noUnsafeDeclarationMerging": "off",
+				"noUnsafeNegation": "error",
+				"noVar": "error",
+				"noWith": "error",
+				"useAwait": "error",
+				"useGetterReturn": "error",
+				"useIsArray": "error",
+				"useNamespaceKeyword": "error"
+			},
+			"performance": {
+				"noAccumulatingSpread": "off"
+				// "noBarrelFile": "error" // @NOTE: we might want to enable this in the future to prevent barrel files, that means don't use `export * from './path'`
+			},
+			"security": {
+				"noBlankTarget": "error",
+				"noDangerouslySetInnerHtml": "error",
+				"noDangerouslySetInnerHtmlWithChildren": "error",
+				"noGlobalEval": "error"
+			}
+		}
+	},
+	"javascript": {
+		"parser": {
+			"unsafeParameterDecoratorsEnabled": true
+		},
+		"formatter": {
+			"jsxQuoteStyle": "double",
+			"quoteStyle": "single",
+			"quoteProperties": "asNeeded",
+			"trailingCommas": "all",
+			"semicolons": "always",
+			"arrowParentheses": "asNeeded",
+			"bracketSameLine": false,
+			"enabled": true,
+			"indentStyle": "tab",
+			"indentWidth": 4,
+			"lineEnding": "lf",
+			"lineWidth": 120,
+			"attributePosition": "auto",
+			"bracketSpacing": true
+		},
+		"globals": [
+			"LimitArr",
+			"Dictionary",
+			"WithFiniteProperty",
+			"IsFiniteObject",
+			"WithOptional",
+			"WithRequired",
+			"WithID",
+			"Unpack",
+			"ExcludeUndefinedProperties",
+			"DeepPartial",
+			"DeepRequired",
+			"Primitive",
+			"PickKeysConditional",
+			"PickBy",
+			"OmitKeysConditional",
+			"OmitBy",
+			"CamelCase",
+			"Prefix",
+			"WithoutObjectKeys",
+			"DistributiveOmit",
+			"DistributiveExtend",
+			"UnknownObject",
+			"AnyObject",
+			"AnyClass",
+			"AnyFunction",
+			"AnyFunctionPromise",
+			"AsyncVoidFunction",
+			"AnyArray",
+			"UnionToIntersection",
+			"UnionForAny",
+			"IsStrictlyAny",
+			"ReplaceIfAny",
+			"ValuesOf",
+			"Maybe",
+			"AllOrNone",
+			"ThisFunc",
+			"TMethodDecorator",
+			"ObjectPaths",
+			"ObjectPathsWithArray",
+			"FlattenObject",
+			"PropertyValue",
+			"RecursiveKeyOf",
+			"Extend",
+			"KeysOfType",
+			"DeepOmit",
+			"DeepOmitArray",
+			"Tail",
+			"TailUnion",
+			"RequireKeysDeepArr",
+			"PathToStringArray",
+			"RequireKeysDeep",
+			"HasRequiredProperties",
+			"Writable",
+			"Key",
+			"StringKeys",
+			"ExtractStrings",
+			"IsUnknown",
+			"IsUnknownObject",
+			"CommonIgnoreTypesWithNever",
+			"CommonIgnoreTypes",
+			"Common",
+			"IsUnion",
+			"Nullable",
+			"Truthy",
+			"SnakeCaseToKebabCase",
+			"RequireAtLeastOne",
+			"NonEmptyArray",
+			"LooseAutocomplete",
+			"typetest",
+			"React",
+			"FCC",
+			"JSX",
+			"AppEnv",
+			// Test globals
+			"afterEach",
+			"afterAll",
+			"beforeEach",
+			"beforeAll",
+			"describe",
+			"expect",
+			"it",
+			"test",
+			"vi"
+		]
+	},
+	"overrides": [
+		{
+			"includes": ["packages/**/*.ts", "packages/**/*.tsx"],
+			"linter": {
+				"rules": {
+					"style": {
+						"noNamespace": "off"
+					},
+					"correctness": {
+						"noUndeclaredVariables": "off"
+					}
+				}
+			}
+		},
+		{
+			"includes": ["packages/tools/scripts/**/*.ts"],
+			"linter": {
+				"rules": {
+					"suspicious": {
+						"noConsole": "off"
+					}
+				}
+			}
+		},
+		{
+			"includes": [
+				"packages/client/**/*.tsx",
+				"**/*MFE.tsx",
+				"**/webpack.*.ts",
+				"**/*.d.ts",
+				"**/vite*.ts",
+				"**/knip.ts"
+			],
+			"linter": {
+				"rules": {
+					"style": {
+						"noDefaultExport": "off"
+					}
+				}
+			}
+		},
+		{
+			"includes": ["**/*.d.ts"],
+			"linter": {
+				"rules": {
+					"correctness": {
+						"noUnusedImports": "off"
+					}
+				}
+			}
+		}
+	]
+}

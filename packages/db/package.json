@@ -1,0 +1,32 @@
+{
+	"name": "@jcloud/db",
+	"private": true,
+	"version": "0.1.0",
+	"main": "./index.ts",
+	"types": "./index.ts",
+	"license": "MIT",
+	"scripts": {
+		"all": "yarn format && yarn generate && yarn migrate:full",
+		"studio": "prisma studio",
+		"clean": "rm -rf .turbo node_modules",
+		"generate": "prisma generate",
+		"format": "prisma format",
+		"prisma:generate": "prisma generate",
+		"migrate:create": "npx prisma migrate dev --create-only",
+		"migrate:dev": "npx prisma migrate dev && yarn format",
+		"migrate:deploy": "npx prisma migrate deploy && yarn format",
+		"migrate:full": "yarn migrate:dev && yarn migrate:deploy && yarn format",
+		"reset": "rimraf ./prisma/migrations && npx prisma migrate reset --skip-seed",
+		"prisma:studio": "npx prisma studio",
+		"seed": "npx prisma db seed",
+		"reload": "yarn reset && yarn migrate:full && yarn seed && yarn format && yarn workspace @mdst/sync start:dev"
+	},
+	"dependencies": {
+		"@prisma/client": "^7.2.0"
+	},
+	"devDependencies": {
+		"prisma": "^7.2.0",
+		"rimraf": "^6.1.2",
+		"typescript": "^5.9.3"
+	}
+}

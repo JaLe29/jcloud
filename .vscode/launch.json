@@ -1,0 +1,19 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Template",
+			"type": "node",
+			"request": "launch",
+			"cwd": "${workspaceFolder}",
+			"runtimeExecutable": "yarn",
+			"runtimeArgs": [
+				"workspace",
+				"@jcloud/template",
+				"run",
+				"start:dev",
+			],
+			"console": "integratedTerminal",
+		},
+	],
+}

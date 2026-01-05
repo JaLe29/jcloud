@@ -1,0 +1,38 @@
+node_modules/
+*~
+.secret
+# /
+/.buildpath
+/.idea
+
+.DS_Store
+
+/.vscode/*
+!/.vscode/launch.json
+!/.vscode/settings.example.json
+!/.vscode/readme.md
+
+/.project
+/.settings
+dist/
+.cache
+.build-cache
+
+# /log/
+/log/*
+
+# all coverage folders
+coverage
+
+/.git-rewrite/
+
+/tests/coverage
+/tests/**/*.map
+/test-results.xml
+/coverage*.json
+
+#env
+/**/.env
+.yarn/install-state.gz
+
+.secret

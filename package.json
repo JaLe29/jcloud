@@ -1,0 +1,19 @@
+{
+	"name": "jg",
+	"root": true,
+	"version": "1.0.0",
+	"private": true,
+	"workspaces": [
+		"packages/**"
+	],
+	"scripts": {
+		"lint": "yarn biome check",
+		"lint:fix": "yarn biome check --fix"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.2.2",
+		"@types/node": "^20.11.1"
+	},
+	"license": "ISC",
+	"packageManager": "yarn@4.5.3"
+}

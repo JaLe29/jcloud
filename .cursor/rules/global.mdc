@@ -1,0 +1,39 @@
+---
+description:  Rules for our React (Vite) + tRPC SPA project.
+globs:
+alwaysApply: true
+---
+
+# --- Core Principles & Tech Stack ---
+- Our project is a Single Page Application (SPA) built with React and Vite.
+- We use tRPC for end-to-end typesafe APIs.
+- State management for server state is handled exclusively by React Query hooks provided by tRPC.
+- For global client-side state, we use [Zustand]. For local component state, use React hooks (`useState`).
+- Always try to find inspiration in the existing code base before you start inventing something new.
+
+# --- TypeScript & tRPC ---
+- **Strict Typing:** Never use the `any` type. Always define explicit and correct TypeScript types.
+- **tRPC First:** For types related to API data, never write your own interfaces. Always infer them from tRPC procedures using `inferRouterOutputs` or similar tRPC helpers.
+- **API Communication:** To fetch data or perform mutations, always use the tRPC hooks: `api.procedureName.useQuery()` for queries and `api.procedureName.useMutation()` for mutations. Handle `isLoading`, `isError`, and `data` states properly.
+
+# --- Code Quality & Structure ---
+- **Linter:** Always strictly respect the linter and formatter settings defined in the `biome.json` file.
+- **File Structure:**
+  - Reusable, generic UI components (Buttons, Inputs) go into `src/components/ui/`.
+  - Feature-specific components (e.g., UserProfileCard) go into `src/components/features/`.
+  - Custom hooks go into `src/hooks/`.
+  - tRPC procedures and router definitions are located in `src/server/api/`.
+- **Component Naming:** Component files and their exported function must use `PascalCase` (e.g., `MyComponent.tsx`).
+- **Hook Naming:** Custom hooks must be named with a `use` prefix in `camelCase` (e.g., `useUserData.ts`).
+
+# --- Component & UI Development ---
+- **Styling:**
+  - **(Varianta A: Tailwind CSS):** For all styling, use Tailwind CSS utility classes directly in JSX. Never write custom CSS files, CSS-in-JS, or inline style attributes.
+- **Mobile First Design:** Always design and implement components with a mobile-first approach. Use responsive design breakpoints provided by our theme/styling solution.
+- **Reusability (DRY):** If a piece of UI logic or JSX is used more than once, extract it into a reusable component. Reusable components should be "dumb" and receive all data and callbacks via props.
+- **Forms:** For handling forms, use the [např. React Hook Form] library.
+
+# --- Other Rules ---
+- **Date & Time:** Always and only use the `dayjs` library for any date or time manipulations. Do not use the native `Date` object directly for operations.
+- **Routing:** For creating or editing entities, always create a new dedicated route. (e.g., `/posts/new`, `/posts/[id]/edit`). We use [React Router] for routing.
+- **Accessibility (a11y):** Ensure all components are accessible. Use semantic HTML tags (`<nav>`, `<main>`, `<button>`) and provide `aria-*` attributes where necessary.

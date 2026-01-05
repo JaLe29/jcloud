@@ -1,0 +1,50 @@
+{
+  "exclude": [
+    ".yarn/*",
+    "**/dist",
+    "**/.*/",
+    "**/scripts",
+    "**/*.stories.tsx",
+    "**/*.test.*",
+    "**/*.typetest.*"
+  ],
+  "compilerOptions": {
+    "useUnknownInCatchVariables": false,
+    "incremental": true,
+    "target": "ES2019",
+    "lib": [
+      "ESNext",
+      "dom",
+      "WebWorker"
+    ],
+    "disableReferencedProjectLoad": true,
+    "disableSolutionSearching": true,
+    "module": "CommonJS",
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "allowJs": true,
+    "checkJs": false,
+    "jsx": "react-jsx",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "composite": true,
+    "removeComments": true,
+    "downlevelIteration": true,
+    "isolatedModules": false,
+    "strict": true,
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "@jcloud/*": [
+        "packages/*/src",
+      ]
+    },
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "resolveJsonModule": true,
+    "noUncheckedIndexedAccess": true
+  }
+}
