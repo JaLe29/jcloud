@@ -41,7 +41,8 @@ model Service {
   application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   applicationId String
 
-  envs ServiceEnv[]
+  envs   ServiceEnv[]
+  apiKey ApiKey?
 
   @@unique([applicationId, name])
   @@index([applicationId])
@@ -72,4 +73,36 @@ model ServiceEnv {
   @@unique([serviceId, envId])
   @@index([serviceId])
   @@index([envId])
+}
+
+model ApiKey {
+  id  String @id @default(uuid())
+  key String @unique // Server-generated API key
+
+  createdAt DateTime @default(now())
+
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  serviceId String  @unique
+
+  usages ApiKeyUsage[]
+
+  @@index([serviceId])
+  @@index([key])
+}
+
+model ApiKeyUsage {
+  id String @id @default(uuid())
+
+  // Optional metadata about the usage
+  ipAddress String?
+  userAgent String?
+  endpoint  String?
+
+  createdAt DateTime @default(now())
+
+  apiKey   ApiKey @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+  apiKeyId String
+
+  @@index([apiKeyId])
+  @@index([createdAt])
 }

@@ -106,6 +106,14 @@ export const applicationRouter = (router: Router, procedure: Procedure) => {
 								envs: {
 									select: { id: true },
 								},
+								apiKey: {
+									include: {
+										usages: {
+											orderBy: { createdAt: 'desc' },
+											take: 1,
+										},
+									},
+								},
 							},
 						},
 						_count: {

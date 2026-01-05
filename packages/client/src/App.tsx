@@ -7,6 +7,7 @@ import { HomePage } from './pages/HomePage';
 import { ApplicationsPage } from './pages/ApplicationsPage';
 import { ApplicationDetailPage } from './pages/ApplicationDetailPage';
 import { ApplicationFormPage } from './pages/ApplicationFormPage';
+import { ServiceDetailPage } from './pages/ServiceDetailPage';
 import { ServiceFormPage } from './pages/ServiceFormPage';
 import { EnvsPage } from './pages/EnvsPage';
 import { trpc, trpcClient } from './utils/trpc';
@@ -67,6 +68,14 @@ export const App: React.FC = () => {
 			element: (
 				<Layout>
 					<ServiceFormPage />
+				</Layout>
+			),
+		},
+		{
+			path: '/applications/:applicationId/services/:serviceId',
+			element: (
+				<Layout>
+					<ServiceDetailPage />
 				</Layout>
 			),
 		},

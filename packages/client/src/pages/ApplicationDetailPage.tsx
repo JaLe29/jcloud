@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { Card, Typography, Space, Button, Table, Tag, Modal, message, Tooltip, Descriptions } from 'antd';
+import { Card, Typography, Space, Button, Table, Tag, Modal, message, Descriptions, Tooltip } from 'antd';
 import {
 	ArrowLeftOutlined,
 	DeleteOutlined,
@@ -25,6 +25,10 @@ interface ServiceData {
 	memoryLimit: number | null;
 	createdAt: Date;
 	envs?: Array<{ id: string }>;
+	apiKey?: {
+		id: string;
+		usages: Array<{ id: string; createdAt: Date }>;
+	} | null;
 }
 
 export const ApplicationDetailPage = () => {
@@ -149,19 +153,22 @@ export const ApplicationDetailPage = () => {
 			render: (_, record) => {
 				const count = record.envs?.length ?? 0;
 				return count > 0 ? (
-					<Button
-						type="text"
-						size="small"
-						icon={<LockOutlined />}
-						onClick={(e) => {
-							e.stopPropagation();
-							navigate(`/envs?serviceId=${record.id}`);
-						}}
-					>
-						{count}
-					</Button>
+					<Tag icon={<LockOutlined />}>{count}</Tag>
 				) : (
 					<Text type="secondary">-</Text>
+				);
+			},
+		},
+		{
+			title: 'Last Deploy',
+			key: 'lastDeploy',
+			width: 140,
+			render: (_, record) => {
+				const lastUsage = record.apiKey?.usages?.[0];
+				return lastUsage ? (
+					<Text type="secondary">{dayjs(lastUsage.createdAt).format('DD.MM.YYYY HH:mm')}</Text>
+				) : (
+					<Text type="secondary">Never</Text>
 				);
 			},
 		},
@@ -271,6 +278,10 @@ export const ApplicationDetailPage = () => {
 					rowKey="id"
 					pagination={false}
 					scroll={{ x: 700 }}
+					onRow={(record) => ({
+						onClick: () => navigate(`/applications/${id}/services/${record.id}`),
+						style: { cursor: 'pointer' },
+					})}
 					locale={{
 						emptyText: (
 							<Space direction="vertical" size="middle" style={{ padding: 40 }}>
