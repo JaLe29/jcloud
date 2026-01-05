@@ -12,7 +12,7 @@ on:
 
 env:
     NODE_VERSION: "20.x"
-    TAG: jump-game-bff-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}-dev
+    TAG: jcloud-bff-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}-dev
 
 jobs:
     build-and-deploy:
@@ -49,5 +49,5 @@ jobs:
             #       curl -X POST \
             #         -H "Content-Type: application/json" \
             #         -H "Authorization: ${{ secrets.N8N_WEBHOOK_TOKEN }}" \
-            #         -d '{"project":"dev-jump-game-bff", "image":"${{ vars.REGISTRY_URL }}:${{ env.TAG }}"}' \
+            #         -d '{"project":"dev-jcloud-bff", "image":"${{ vars.REGISTRY_URL }}:${{ env.TAG }}"}' \
             #         ${{ vars.DEPLOY_N8N_URL }}
