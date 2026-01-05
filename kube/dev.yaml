@@ -1,0 +1,152 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jcloud-bff
+  labels:
+    app: jcloud-bff
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 50%
+  selector:
+    matchLabels:
+      app: jcloud-bff
+  template:
+    metadata:
+      labels:
+        app: jcloud-bff
+    spec:
+      imagePullSecrets:
+        - name: docker-account
+      containers:
+        - name: jcloud-bff
+          image: registry.gitlab.com/jale29/private-images:jcloud-bff-00b71670adaded40941cd69067df48184b9bb2f7-20728915978-1-dev
+          ports:
+            - containerPort: 3334
+          resources:
+            limits:
+              memory: "400Mi"
+              cpu: "400m"
+          env:
+            - name: K8S_POD_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+            - name: NODE_ENV
+              value: "production"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jcloud-bff
+spec:
+  type: ClusterIP
+  selector:
+    app: jcloud-bff
+  ports:
+    - protocol: TCP
+      port: 3334
+      targetPort: 3334
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jcloud-api
+  labels:
+    app: jcloud-api
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 50%
+  selector:
+    matchLabels:
+      app: jcloud-api
+  template:
+    metadata:
+      labels:
+        app: jcloud-api
+    spec:
+      imagePullSecrets:
+        - name: docker-account
+      containers:
+        - name: jcloud-api
+          image: registry.gitlab.com/jale29/private-images:jcloud-api-66852641cdbcc66822e832097b5d6079fbed362c-20729195071-1-dev
+          ports:
+            - containerPort: 3333
+          resources:
+            limits:
+              memory: "400Mi"
+              cpu: "400m"
+          env:
+            - name: K8S_POD_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+            - name: NODE_ENV
+              value: "production"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jcloud-api
+spec:
+  type: ClusterIP
+  selector:
+    app: jcloud-api
+  ports:
+    - protocol: TCP
+      port: 3333
+      targetPort: 3333
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: docker-account
+type: Opaque
+stringData:
+  GITLAB_USERNAME: docker
+  GITLAB_TOKEN: xxxx
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: jcloud-bff-ingress
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: jcloud-bff.jale.cz
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: jcloud-bff
+                port:
+                  number: 3334
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: jcloud-api-ingress
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: jcloud-api.jale.cz
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: jcloud-api
+                port:
+                  number: 3333
