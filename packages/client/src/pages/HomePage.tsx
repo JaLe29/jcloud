@@ -1,5 +1,5 @@
-import { Table, Typography, Space, Alert, Card, Row, Col, Statistic } from 'antd';
-import { UserOutlined, CalendarOutlined, RiseOutlined } from '@ant-design/icons';
+import { Typography, Space, Alert, Card, Row, Col, Statistic, Button, Table, Tag } from 'antd';
+import { CloudServerOutlined, AppstoreOutlined, PlusOutlined, RocketOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
@@ -7,57 +7,57 @@ import { trpc } from '../utils/trpc';
 
 const { Title, Text } = Typography;
 
-interface UserData {
+interface ApplicationData {
 	id: string;
-	userPublicId: string;
+	name: string;
+	namespace: string;
 	createdAt: Date;
 	_count: {
-		events: number;
+		services: number;
 	};
 }
 
 export const HomePage = () => {
 	const navigate = useNavigate();
-	const { data, isLoading, error } = trpc.user.list.useQuery(undefined);
+	const { data, isLoading, error } = trpc.application.list.useQuery({ limit: 5 });
 
-	const columns: ColumnsType<UserData> = [
+	const columns: ColumnsType<ApplicationData> = [
 		{
-			title: 'ID',
-			dataIndex: 'id',
-			key: 'id',
-			width: 100,
+			title: 'Name',
+			dataIndex: 'name',
+			key: 'name',
 			render: (text: string) => (
-				<Text type="secondary" style={{ fontFamily: 'monospace', fontSize: 12 }}>
-					{text.substring(0, 8)}...
-				</Text>
-			),
-		},
-		{
-			title: 'Public ID',
-			dataIndex: 'userPublicId',
-			key: 'userPublicId',
-			render: (text: string) => (
-				<Text strong style={{ color: '#9019F9' }}>
+				<Text strong style={{ color: '#0ea5e9' }}>
 					{text}
 				</Text>
 			),
 		},
 		{
-			title: 'Created At',
-			dataIndex: 'createdAt',
-			key: 'createdAt',
-			render: (date: Date) => dayjs(date).format('DD.MM.YYYY HH:mm:ss'),
+			title: 'Namespace',
+			dataIndex: 'namespace',
+			key: 'namespace',
+			render: (text: string) => <Tag color="blue">{text}</Tag>,
 		},
 		{
-			title: 'Events Count',
-			key: 'eventsCount',
+			title: 'Services',
+			key: 'servicesCount',
 			render: (_, record) => (
-				<Text strong style={{ color: record._count.events > 0 ? '#9019F9' : '#94a3b8' }}>
-					{record._count.events}
+				<Text strong style={{ color: record._count.services > 0 ? '#10b981' : '#94a3b8' }}>
+					{record._count.services}
 				</Text>
 			),
-			width: 120,
+			width: 80,
 			align: 'center',
+		},
+		{
+			title: 'Created',
+			dataIndex: 'createdAt',
+			key: 'createdAt',
+			render: (date: Date) => (
+				<Text type="secondary" style={{ fontSize: 13 }}>
+					{dayjs(date).format('DD.MM.YYYY')}
+				</Text>
+			),
 		},
 	];
 
@@ -69,17 +69,28 @@ export const HomePage = () => {
 		);
 	}
 
-	const totalEvents = data?.users?.reduce((sum, user) => sum + user._count.events, 0) || 0;
+	const totalServices = data?.applications?.reduce((sum, app) => sum + app._count.services, 0) || 0;
 
 	return (
 		<Space direction="vertical" size="large" style={{ width: '100%' }}>
-			<div>
-				<Title level={2} style={{ marginBottom: 8 }}>
-					Welcome to Jump Game
-				</Title>
-				<Text type="secondary" style={{ fontSize: 15 }}>
-					Manage your users and events in one place
-				</Text>
+			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+				<div>
+					<Title level={2} style={{ marginBottom: 8 }}>
+						<RocketOutlined style={{ marginRight: 12, color: '#0ea5e9' }} />
+						JCloud Dashboard
+					</Title>
+					<Text type="secondary" style={{ fontSize: 15 }}>
+						Manage your Kubernetes applications and services
+					</Text>
+				</div>
+				<Button
+					type="primary"
+					icon={<PlusOutlined />}
+					size="large"
+					onClick={() => navigate('/applications/new')}
+				>
+					New Application
+				</Button>
 			</div>
 
 			<Row gutter={[16, 16]}>
@@ -88,14 +99,17 @@ export const HomePage = () => {
 						bordered={false}
 						style={{
 							borderRadius: 12,
-							border: '1px solid #f3f4f6',
+							background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
+							border: '1px solid #bae6fd',
 						}}
+						hoverable
+						onClick={() => navigate('/applications')}
 					>
 						<Statistic
-							title="Total Users"
+							title={<Text style={{ color: '#0369a1' }}>Total Applications</Text>}
 							value={data?.pagination?.total || 0}
-							prefix={<UserOutlined style={{ color: '#9019F9' }} />}
-							valueStyle={{ color: '#1f2937' }}
+							prefix={<AppstoreOutlined style={{ color: '#0ea5e9' }} />}
+							valueStyle={{ color: '#0284c7' }}
 						/>
 					</Card>
 				</Col>
@@ -104,14 +118,15 @@ export const HomePage = () => {
 						bordered={false}
 						style={{
 							borderRadius: 12,
-							border: '1px solid #f3f4f6',
+							background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+							border: '1px solid #86efac',
 						}}
 					>
 						<Statistic
-							title="Total Events"
-							value={totalEvents}
-							prefix={<CalendarOutlined style={{ color: '#9019F9' }} />}
-							valueStyle={{ color: '#1f2937' }}
+							title={<Text style={{ color: '#166534' }}>Total Services</Text>}
+							value={totalServices}
+							prefix={<CloudServerOutlined style={{ color: '#10b981' }} />}
+							valueStyle={{ color: '#16a34a' }}
 						/>
 					</Card>
 				</Col>
@@ -120,15 +135,14 @@ export const HomePage = () => {
 						bordered={false}
 						style={{
 							borderRadius: 12,
-							border: '1px solid #f3f4f6',
+							background: 'linear-gradient(135deg, #fdf4ff 0%, #fae8ff 100%)',
+							border: '1px solid #e879f9',
 						}}
 					>
 						<Statistic
-							title="Active Rate"
-							value={data?.pagination?.total ? ((totalEvents / data.pagination.total) * 100).toFixed(1) : 0}
-							suffix="%"
-							prefix={<RiseOutlined style={{ color: '#9019F9' }} />}
-							valueStyle={{ color: '#1f2937' }}
+							title={<Text style={{ color: '#86198f' }}>Avg Services per App</Text>}
+							value={data?.pagination?.total ? (totalServices / data.pagination.total).toFixed(1) : 0}
+							valueStyle={{ color: '#a21caf' }}
 						/>
 					</Card>
 				</Col>
@@ -136,13 +150,14 @@ export const HomePage = () => {
 
 			<Card
 				title={
-					<div>
-						<Title level={3} style={{ margin: 0, marginBottom: 4 }}>Recent Users</Title>
-						{data?.pagination && (
-							<Text type="secondary">
-								Total: {data.pagination.total} | Page: {data.pagination.page} / {data.pagination.totalPages}
-							</Text>
-						)}
+					<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+						<Space>
+							<AppstoreOutlined style={{ color: '#0ea5e9' }} />
+							<span>Recent Applications</span>
+						</Space>
+						<Button type="link" onClick={() => navigate('/applications')}>
+							View All →
+						</Button>
 					</div>
 				}
 				bordered={false}
@@ -150,22 +165,34 @@ export const HomePage = () => {
 			>
 				<Table
 					columns={columns}
-					dataSource={data?.users || []}
+					dataSource={data?.applications || []}
 					loading={isLoading}
 					rowKey="id"
 					onRow={(record) => ({
-						onClick: () => navigate(`/users/${record.id}`),
+						onClick: () => navigate(`/applications/${record.id}`),
 						style: { cursor: 'pointer' },
 					})}
-					pagination={{
-						total: data?.pagination?.total || 0,
-						current: data?.pagination?.page || 1,
-						pageSize: 10,
-						showSizeChanger: false,
+					pagination={false}
+					locale={{
+						emptyText: (
+							<Space direction="vertical" size="middle" style={{ padding: 40 }}>
+								<AppstoreOutlined style={{ fontSize: 48, color: '#d1d5db' }} />
+								<Text type="secondary">No applications yet</Text>
+								<Button
+									type="primary"
+									icon={<PlusOutlined />}
+									onClick={(e) => {
+										e.stopPropagation();
+										navigate('/applications/new');
+									}}
+								>
+									Create Your First Application
+								</Button>
+							</Space>
+						),
 					}}
 				/>
 			</Card>
 		</Space>
 	);
 };
-

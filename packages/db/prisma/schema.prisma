@@ -8,22 +8,39 @@ datasource db {
 
 // ----------------------
 
-model User {
-  id           String   @id @unique @default(uuid())
-  userPublicId String   @unique
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  events       Event[]
+model Application {
+  id        String @id @default(uuid())
+  name      String @unique
+  namespace String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  services Service[]
 }
 
-model Event {
-  id String @id @default(uuid())
+model Service {
+  id   String @id @default(uuid())
+  name String
 
-  event     String
-  meta      Json?
+  // Deployment settings
+  replicas   Int     @default(1)
+  ingressUrl String?
+
+  // Resource requests (optional) - in millicores for CPU, MB for memory
+  cpuRequest    Int?
+  memoryRequest Int?
+
+  // Resource limits (optional) - in millicores for CPU, MB for memory
+  cpuLimit    Int?
+  memoryLimit Int?
+
   createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
+  updatedAt DateTime @updatedAt
 
-  @@index([userId])
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  applicationId String
+
+  @@unique([applicationId, name])
+  @@index([applicationId])
 }

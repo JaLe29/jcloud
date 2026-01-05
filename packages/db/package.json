@@ -16,15 +16,19 @@
 		"migrate:dev": "npx prisma migrate dev && yarn format",
 		"migrate:deploy": "npx prisma migrate deploy && yarn format",
 		"migrate:full": "yarn migrate:dev && yarn migrate:deploy && yarn format",
-		"reset": "rimraf ./prisma/migrations && npx prisma migrate reset --skip-seed",
+		"reset": "rimraf ./prisma/migrations && npx prisma migrate reset",
 		"prisma:studio": "npx prisma studio",
 		"seed": "npx prisma db seed",
 		"reload": "yarn reset && yarn migrate:full && yarn seed && yarn format && yarn workspace @mdst/sync start:dev"
 	},
 	"dependencies": {
-		"@prisma/client": "^7.2.0"
+		"@prisma/adapter-pg": "^7.2.0",
+		"@prisma/client": "^7.2.0",
+		"dotenv": "^17.2.3",
+		"pg": "^8.16.3"
 	},
 	"devDependencies": {
+		"@types/pg": "^8.16.0",
 		"prisma": "^7.2.0",
 		"rimraf": "^6.1.2",
 		"typescript": "^5.9.3"

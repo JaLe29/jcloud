@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Layout as AntLayout, Menu, Typography, theme, Button } from 'antd';
-import { UserOutlined, HomeOutlined, CalendarOutlined, MenuOutlined } from '@ant-design/icons';
+import { AppstoreOutlined, HomeOutlined, MenuOutlined } from '@ant-design/icons';
 import type React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -26,20 +26,21 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 			label: 'Home',
 		},
 		{
-			key: '/users',
-			icon: <UserOutlined />,
-			label: 'Users',
-		},
-		{
-			key: '/events',
-			icon: <CalendarOutlined />,
-			label: 'Events',
+			key: '/applications',
+			icon: <AppstoreOutlined />,
+			label: 'Applications',
 		},
 	];
 
+	const getSelectedKey = () => {
+		if (location.pathname.startsWith('/applications')) {
+			return '/applications';
+		}
+		return location.pathname;
+	};
+
 	const handleMenuClick = (key: string) => {
 		navigate(key);
-		// Auto-collapse on mobile after navigation
 		if (window.innerWidth < 992) {
 			setCollapsed(true);
 		}
@@ -60,6 +61,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 					top: 0,
 					bottom: 0,
 					zIndex: 999,
+					background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 100%)',
 				}}
 			>
 				<div
@@ -73,15 +75,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 					}}
 				>
 					<Title level={4} style={{ color: 'white', margin: 0, whiteSpace: 'nowrap' }}>
-						🎮 Jump Game
+						☁️ JCloud
 					</Title>
 				</div>
 				<Menu
 					theme="dark"
 					mode="inline"
-					selectedKeys={[location.pathname]}
+					selectedKeys={[getSelectedKey()]}
 					items={menuItems}
 					onClick={({ key }) => handleMenuClick(key)}
+					style={{ background: 'transparent' }}
 				/>
 			</Sider>
 			<AntLayout style={{ marginLeft: collapsed ? 0 : 200, transition: 'margin-left 0.2s' }}>
@@ -104,17 +107,17 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 							type="text"
 							icon={<MenuOutlined />}
 							onClick={() => setCollapsed(!collapsed)}
-							style={{ fontSize: '18px', color: '#9019F9' }}
+							style={{ fontSize: '18px', color: '#0ea5e9' }}
 						/>
 						<Title
 							level={3}
 							style={{
 								margin: 0,
-								color: '#9019F9',
+								color: '#0ea5e9',
 								fontWeight: 700,
 							}}
 						>
-							Dashboard
+							Kubernetes Manager
 						</Title>
 					</div>
 				</Header>
@@ -136,4 +139,3 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 		</AntLayout>
 	);
 };
-
