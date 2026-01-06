@@ -4,20 +4,15 @@ import type { ColumnsType } from 'antd/es/table';
 import { EyeOutlined, ClockCircleOutlined, SyncOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { trpc } from '../../utils/trpc';
+import type { inferRouterOutputs } from '@trpc/server';
+import type { AppRouter } from '@jcloud/bff/src/trpc/router';
 
 const { Text } = Typography;
 
 type TaskStatus = 'WAITING' | 'EXECUTING' | 'FAILED' | 'DONE';
 
-interface TaskData {
-	id: string;
-	status: TaskStatus;
-	log: string[];
-	meta: Record<string, unknown> | null;
-	createdAt: Date;
-	startedAt: Date | null;
-	finishedAt: Date | null;
-}
+type RouterOutput = inferRouterOutputs<AppRouter>;
+type TaskData = RouterOutput['task']['list']['tasks'][number];
 
 interface ServiceTasksProps {
 	serviceId: string;

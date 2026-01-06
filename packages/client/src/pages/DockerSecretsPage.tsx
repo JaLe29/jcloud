@@ -14,6 +14,7 @@ interface DockerSecretData {
 	username: string;
 	password: string;
 	createdAt: Date;
+	updatedAt: Date;
 	_count: {
 		services: number;
 	};
