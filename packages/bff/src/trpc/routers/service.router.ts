@@ -267,6 +267,18 @@ export const serviceRouter = (router: Router, procedure: Procedure) => {
 					},
 				});
 
+				// Create task for deployment
+				await ctx.prisma.task.create({
+					data: {
+						serviceId: input.serviceId,
+						meta: {
+							type: 'deploy-created',
+							image: input.image,
+							deployId: deploy.id,
+						},
+					},
+				});
+
 				// TODO: Actually deploy to Kubernetes here
 
 				return {

@@ -79,6 +79,18 @@ export class Server {
 					},
 				});
 
+				// Create task for deployment
+				await this.prisma.task.create({
+					data: {
+						serviceId: key.service.id,
+						meta: {
+							type: 'deploy-created',
+							image,
+							deployId: deploy.id,
+						},
+					},
+				});
+
 				// TODO: Actually deploy to Kubernetes here
 				// For now, just return success
 
