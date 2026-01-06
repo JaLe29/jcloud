@@ -31,8 +31,8 @@ COPY --from=build /usr/app/package.json								./package.json
 COPY --from=build /usr/app/packages/worker/package.json				./packages/worker/package.json
 COPY --from=build /usr/app/packages/worker/dist						./packages/worker/dist
 
-COPY --from=build /usr/app/packages/backend-shared	/package.json				./packages/backend-shared	/package.json
-COPY --from=build /usr/app/packages/backend-shared	/dist						./packages/backend-shared	/dist
+COPY --from=build /usr/app/packages/backend-shared/package.json		./packages/backend-shared/package.json
+COPY --from=build /usr/app/packages/backend-shared/dist				./packages/backend-shared/dist
 
 COPY --from=build /usr/app/node_modules								./node_modules
 

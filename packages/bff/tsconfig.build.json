@@ -13,6 +13,8 @@
 		"isolatedModules": false,
 		"types": [
 			"node"
-		]
+		],
+		"baseUrl": ".",
+		"paths": {}
 	}
 }

@@ -33,8 +33,8 @@ COPY --from=build /usr/app/package.json								./package.json
 COPY --from=build /usr/app/packages/bff/package.json				./packages/bff/package.json
 COPY --from=build /usr/app/packages/bff/dist						./packages/bff/dist
 
-COPY --from=build /usr/app/packages/backend-shared	/package.json				./packages/backend-shared	/package.json
-COPY --from=build /usr/app/packages/backend-shared	/dist						./packages/backend-shared	/dist
+COPY --from=build /usr/app/packages/backend-shared/package.json		./packages/backend-shared/package.json
+COPY --from=build /usr/app/packages/backend-shared/dist				./packages/backend-shared/dist
 
 COPY --from=build /usr/app/packages/client/dist						./packages/client/dist
 
