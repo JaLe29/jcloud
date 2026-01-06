@@ -274,7 +274,7 @@ export class TaskService {
 		return response;
 	}
 
-	async createK8sService(coreApi: CoreV1Api, config: ServiceConfig): Promise<V1Service> {
+	async createK8sService(coreApi: CoreV1Api, config: ServiceConfig, deploymentName: string): Promise<V1Service> {
 		const serviceName = toK8sName(config.name);
 		const k8sNamespace = toK8sName(config.namespace, 63);
 
@@ -285,7 +285,7 @@ export class TaskService {
 			},
 			spec: {
 				selector: {
-					app: serviceName,
+					app: deploymentName, // Use the same label as deployment
 				},
 				ports: [
 					{
@@ -486,6 +486,7 @@ export class TaskService {
 			}
 
 			// Create or update deployment
+			const deploymentName = toK8sName(service.name);
 			await this.createDeployment(appsApi, {
 				name: service.name,
 				namespace,
@@ -502,22 +503,27 @@ export class TaskService {
 				},
 			});
 
-			// Create Kubernetes Service
-			await this.createK8sService(coreApi, {
-				name: service.name,
-				namespace,
-				containerPort: service.containerPort,
-			});
+			// Create Kubernetes Service (using the same deployment name for selector)
+			await this.createK8sService(
+				coreApi,
+				{
+					name: service.name,
+					namespace,
+					containerPort: service.containerPort,
+				},
+				deploymentName,
+			);
 
 			// Create Ingress if ingressUrl is defined
 			if (service.ingressUrl) {
 				try {
 					const url = new URL(service.ingressUrl);
+					const k8sServiceName = toK8sName(service.name);
 					await this.createIngress(networkingApi, {
 						name: service.name,
 						namespace,
 						host: url.hostname,
-						serviceName: service.name,
+						serviceName: k8sServiceName,
 						servicePort: service.containerPort,
 					});
 				} catch (err) {
