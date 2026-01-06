@@ -1,23 +1,18 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, Table, Typography, Space, Tag, Button } from 'antd';
+import { Table, Typography, Space, Card, Tag, Button, Select } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { EyeOutlined, ClockCircleOutlined, SyncOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { trpc } from '../../utils/trpc';
+import { trpc } from '../utils/trpc';
 import type { inferRouterOutputs } from '@trpc/server';
 import type { AppRouter } from '@jcloud/bff/src/trpc/router';
 
-const { Text } = Typography;
+const { Title, Text } = Typography;
 
 type TaskStatus = 'WAITING' | 'EXECUTING' | 'FAILED' | 'DONE';
-
 type RouterOutput = inferRouterOutputs<AppRouter>;
 type TaskData = RouterOutput['task']['list']['tasks'][number];
-
-interface ServiceTasksProps {
-	serviceId: string;
-}
 
 const statusConfig: Record<TaskStatus, { color: string; icon: React.ReactNode; label: string }> = {
 	WAITING: { color: 'default', icon: <ClockCircleOutlined />, label: 'Waiting' },
@@ -26,16 +21,17 @@ const statusConfig: Record<TaskStatus, { color: string; icon: React.ReactNode; l
 	FAILED: { color: 'error', icon: <CloseCircleOutlined />, label: 'Failed' },
 };
 
-export const ServiceTasks = ({ serviceId }: ServiceTasksProps) => {
+export const TasksPage = () => {
 	const navigate = useNavigate();
 	const [page, setPage] = useState(1);
+	const [statusFilter, setStatusFilter] = useState<TaskStatus | undefined>();
 
 	const { data, isLoading } = trpc.task.list.useQuery({
 		page,
-		limit: 10,
+		limit: 20,
 		sortBy: 'createdAt',
 		sortOrder: 'desc',
-		filter: { serviceId },
+		filter: statusFilter ? { status: statusFilter } : undefined,
 	});
 
 	const getTaskType = (meta: Record<string, unknown> | null): string => {
@@ -68,6 +64,17 @@ export const ServiceTasks = ({ serviceId }: ServiceTasksProps) => {
 				const meta = record.meta as Record<string, unknown> | null;
 				return <Text>{getTaskType(meta)}</Text>;
 			},
+		},
+		{
+			title: 'Service',
+			key: 'service',
+			width: 200,
+			render: (_: unknown, record: TaskData) => (
+				<Space direction="vertical" size={0}>
+					<Text>{record.service.name}</Text>
+					<Text type="secondary" style={{ fontSize: 12 }}>{record.service.application.name}</Text>
+				</Space>
+			),
 		},
 		{
 			title: 'Created',
@@ -105,28 +112,47 @@ export const ServiceTasks = ({ serviceId }: ServiceTasksProps) => {
 	];
 
 	return (
-		<Card title="Tasks" size="small">
-			<Table
-				columns={columns}
-				dataSource={data?.tasks || []}
-				loading={isLoading}
-				rowKey="id"
-				pagination={{
-					current: page,
-					total: data?.pagination?.total || 0,
-					pageSize: 10,
-					showSizeChanger: false,
-					showTotal: (total) => `${total} task${total !== 1 ? 's' : ''}`,
-					onChange: setPage,
-				}}
-				locale={{
-					emptyText: (
-						<Space direction="vertical" style={{ padding: 20 }}>
-							<Text type="secondary">No tasks yet</Text>
-						</Space>
-					),
-				}}
-			/>
-		</Card>
+		<Space direction="vertical" size="large" style={{ width: '100%' }}>
+			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+				<Title level={2} style={{ margin: 0 }}>Tasks</Title>
+				<Select
+					placeholder="Filter by status"
+					allowClear
+					style={{ width: 150 }}
+					value={statusFilter}
+					onChange={setStatusFilter}
+					options={[
+						{ value: 'WAITING', label: 'Waiting' },
+						{ value: 'EXECUTING', label: 'Executing' },
+						{ value: 'DONE', label: 'Done' },
+						{ value: 'FAILED', label: 'Failed' },
+					]}
+				/>
+			</div>
+
+			<Card>
+				<Table
+					columns={columns}
+					dataSource={data?.tasks || []}
+					loading={isLoading}
+					rowKey="id"
+					pagination={{
+						current: page,
+						total: data?.pagination?.total || 0,
+						pageSize: 20,
+						showSizeChanger: false,
+						showTotal: (total) => `${total} task${total !== 1 ? 's' : ''}`,
+						onChange: setPage,
+					}}
+					locale={{
+						emptyText: (
+							<Space direction="vertical" style={{ padding: 40 }}>
+								<Text type="secondary">No tasks yet</Text>
+							</Space>
+						),
+					}}
+				/>
+			</Card>
+		</Space>
 	);
 };

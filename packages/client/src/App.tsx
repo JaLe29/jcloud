@@ -11,6 +11,9 @@ import { ServiceDetailPage } from './pages/ServiceDetailPage';
 import { ServiceFormPage } from './pages/ServiceFormPage';
 import { EnvsPage } from './pages/EnvsPage';
 import { DockerSecretsPage } from './pages/DockerSecretsPage';
+import { DeploymentsPage } from './pages/DeploymentsPage';
+import { TasksPage } from './pages/TasksPage';
+import { TaskDetailPage } from './pages/TaskDetailPage';
 import { trpc, trpcClient } from './utils/trpc';
 import './global.css';
 
@@ -101,6 +104,30 @@ export const App: React.FC = () => {
 			element: (
 				<Layout>
 					<DockerSecretsPage />
+				</Layout>
+			),
+		},
+		{
+			path: '/deployments',
+			element: (
+				<Layout>
+					<DeploymentsPage />
+				</Layout>
+			),
+		},
+		{
+			path: '/tasks',
+			element: (
+				<Layout>
+					<TasksPage />
+				</Layout>
+			),
+		},
+		{
+			path: '/tasks/:taskId',
+			element: (
+				<Layout>
+					<TaskDetailPage />
 				</Layout>
 			),
 		},

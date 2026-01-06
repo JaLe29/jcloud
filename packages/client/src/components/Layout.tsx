@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Layout as AntLayout, Menu, Typography, Button } from 'antd';
-import { AppstoreOutlined, HomeOutlined, MenuOutlined, LockOutlined, KeyOutlined } from '@ant-design/icons';
+import { AppstoreOutlined, HomeOutlined, MenuOutlined, LockOutlined, KeyOutlined, RocketOutlined, UnorderedListOutlined } from '@ant-design/icons';
 import type React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -28,6 +28,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 			label: 'Applications',
 		},
 		{
+			key: '/deployments',
+			icon: <RocketOutlined />,
+			label: 'Deployments',
+		},
+		{
+			key: '/tasks',
+			icon: <UnorderedListOutlined />,
+			label: 'Tasks',
+		},
+		{
 			key: '/envs',
 			icon: <LockOutlined />,
 			label: 'Env Variables',
@@ -42,6 +52,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 	const getSelectedKey = () => {
 		if (location.pathname.startsWith('/applications')) {
 			return '/applications';
+		}
+		if (location.pathname.startsWith('/deployments')) {
+			return '/deployments';
+		}
+		if (location.pathname.startsWith('/tasks')) {
+			return '/tasks';
 		}
 		if (location.pathname.startsWith('/envs')) {
 			return '/envs';
