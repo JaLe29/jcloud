@@ -1,0 +1,32 @@
+{
+	"name": "@jcloud/worker",
+	"version": "1.0.0",
+	"license": "ISC",
+	"private": true,
+	"standalone": true,
+	"main": "dist/main.js",
+	"types": "dist/main.d.ts",
+	"prisma": {
+		"schema": ".../db/prisma/schema.prisma"
+	},
+	"scripts": {
+		"build": "tsc --build tsconfig.build.json",
+		"clean": "rimraf dist && rimraf .cache",
+		"start:dev": "tsx --env-file=.env --watch src/main.ts"
+	},
+	"dependencies": {
+		"@fastify/cors": "^11.2.0",
+		"@kubernetes/client-node": "^1.4.0",
+		"@prisma/adapter-pg": "^7.2.0",
+		"@prisma/client": "^7.2.0",
+		"fastify": "^5.6.2",
+		"zod": "^4.2.1"
+	},
+	"devDependencies": {
+		"@types/node": "^20.11.1",
+		"prisma": "^7.2.0",
+		"rimraf": "^6.1.2",
+		"tsx": "^4.21.0",
+		"typescript": "^5.9.3"
+	}
+}

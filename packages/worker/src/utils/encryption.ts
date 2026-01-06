@@ -1,0 +1,41 @@
+import crypto from 'node:crypto';
+
+const ALGORITHM = 'aes-256-gcm';
+const IV_LENGTH = 16;
+const TAG_LENGTH = 16;
+
+function getEncryptionKey(): Uint8Array {
+	const key = process.env.ENCRYPTION_KEY;
+	if (!key) {
+		throw new Error('ENCRYPTION_KEY environment variable is not set');
+	}
+	// Hash the key to ensure it's exactly 32 bytes
+	const hash = crypto.createHash('sha256').update(key).digest();
+	return new Uint8Array(hash);
+}
+
+export function decrypt(encryptedText: string): string {
+	const key = getEncryptionKey();
+
+	try {
+		// Extract IV, AuthTag, and encrypted data
+		const iv = new Uint8Array(Buffer.from(encryptedText.slice(0, IV_LENGTH * 2), 'hex'));
+		const authTag = new Uint8Array(Buffer.from(encryptedText.slice(IV_LENGTH * 2, IV_LENGTH * 2 + TAG_LENGTH * 2), 'hex'));
+		const encrypted = encryptedText.slice(IV_LENGTH * 2 + TAG_LENGTH * 2);
+
+		const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
+		decipher.setAuthTag(authTag);
+
+		let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+		decrypted += decipher.final('utf8');
+
+		return decrypted;
+	} catch (error) {
+		throw new Error(
+			'Failed to decrypt data. This is likely caused by an incorrect ENCRYPTION_KEY. ' +
+			'Make sure the ENCRYPTION_KEY environment variable matches the key used to encrypt the data.',
+			{ cause: error }
+		);
+	}
+}
+
