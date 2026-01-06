@@ -38,7 +38,7 @@ export class TaskService {
 
     async listNamespaces(): Promise<string[]> {
         const response = await this.coreApi.listNamespace();
-        return response.items.map(ns => ns.metadata?.name ?? '');
+        return response.items.map((ns: { metadata?: { name?: string } }) => ns.metadata?.name ?? '');
     }
 
     async createNamespace(name: string): Promise<V1Namespace> {

@@ -966,6 +966,7 @@ __metadata:
   resolution: "@jcloud/api@workspace:packages/api"
   dependencies:
     "@fastify/cors": "npm:^11.2.0"
+    "@jcloud/backend-shared": "workspace:*"
     "@prisma/adapter-pg": "npm:^7.2.0"
     "@prisma/client": "npm:^7.2.0"
     "@types/node": "npm:^20.11.1"

@@ -272,7 +272,7 @@ export const serviceRouter = (router: Router, procedure: Procedure) => {
 				await ctx.prisma.task.create({
 					data: {
 						serviceId: input.serviceId,
-						meta: createDeployTaskMeta(input.image, deploy.id),
+						meta: createDeployTaskMeta(input.image, deploy.id) as unknown as Prisma.InputJsonValue,
 					},
 				});
 
