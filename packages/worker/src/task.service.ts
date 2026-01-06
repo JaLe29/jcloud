@@ -1,7 +1,7 @@
 import { AppsV1Api, CoreV1Api, KubeConfig, V1Deployment, V1Namespace, V1Secret } from "@kubernetes/client-node";
 import { PrismaClient, Task } from "@prisma/client";
 import { KUBECONFIG } from "./const";
-import { decrypt } from "@jcloud/backend-shared";
+import { decrypt, type DeployTaskMeta, isDeployTaskMeta } from "@jcloud/backend-shared";
 import { toK8sName } from "./utils/k8s";
 
 interface DockerSecretData {
@@ -217,7 +217,11 @@ export class TaskService {
     }
 
     async run(task: Task): Promise<void> {
-        const meta = task.meta as { type: string; image: string; deployId: string };
+        if (!isDeployTaskMeta(task.meta)) {
+            await this.failTask(task.id, `Unknown task meta type for task ${task.id}`);
+            return;
+        }
+        const meta: DeployTaskMeta = task.meta;
         console.log(meta);
 
         // Get service with application and docker secrets

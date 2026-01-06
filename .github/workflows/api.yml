@@ -5,6 +5,7 @@ on:
         branches:
             - main
         paths:
+            - "packages/backend-shared/**"
             - "packages/db/**"
             - "packages/api/**"
             - ".github/workflows/api.yml"

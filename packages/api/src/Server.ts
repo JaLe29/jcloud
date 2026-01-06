@@ -4,6 +4,7 @@ import Fastify from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { createDeployTaskMeta } from '@jcloud/backend-shared';
 
 interface ServerOptions {
 	port: number;
@@ -83,11 +84,7 @@ export class Server {
 				await this.prisma.task.create({
 					data: {
 						serviceId: key.service.id,
-						meta: {
-							type: 'deploy-created',
-							image,
-							deployId: deploy.id,
-						},
+						meta: createDeployTaskMeta(image, deploy.id),
 					},
 				});
 

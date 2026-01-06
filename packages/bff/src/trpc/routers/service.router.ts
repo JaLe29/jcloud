@@ -1,6 +1,7 @@
 import { TRPCError } from '@trpc/server';
 import type { Prisma } from '@prisma/client';
 import { z } from 'zod';
+import { createDeployTaskMeta } from '@jcloud/backend-shared';
 import type { Procedure, Router } from '../router';
 import { getPaginationMeta, getPaginationParams, createPaginationInputSchema } from '../../utils/pagination';
 
@@ -271,11 +272,7 @@ export const serviceRouter = (router: Router, procedure: Procedure) => {
 				await ctx.prisma.task.create({
 					data: {
 						serviceId: input.serviceId,
-						meta: {
-							type: 'deploy-created',
-							image: input.image,
-							deployId: deploy.id,
-						},
+						meta: createDeployTaskMeta(input.image, deploy.id),
 					},
 				});
 
