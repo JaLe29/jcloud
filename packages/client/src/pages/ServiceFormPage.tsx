@@ -10,6 +10,7 @@ const { Title, Text } = Typography;
 interface ServiceFormValues {
 	name: string;
 	replicas: number;
+	containerPort: number;
 	ingressUrl?: string | null;
 	cpuRequest?: number | null;
 	cpuLimit?: number | null;
@@ -80,6 +81,7 @@ export const ServiceFormPage = () => {
 			form.setFieldsValue({
 				name: service.name,
 				replicas: service.replicas,
+				containerPort: service.containerPort,
 				ingressUrl: service.ingressUrl,
 				cpuRequest: service.cpuRequest,
 				cpuLimit: service.cpuLimit,
@@ -188,6 +190,17 @@ export const ServiceFormPage = () => {
 							rules={[{ required: true, message: 'Required' }]}
 						>
 							<InputNumber min={0} max={100} style={{ width: '100%' }} />
+						</Form.Item>
+
+						<Form.Item
+							label="Container Port"
+							name="containerPort"
+							rules={[
+								{ required: true, message: 'Required' },
+								{ type: 'number', min: 1, max: 65535, message: 'Port must be between 1 and 65535' },
+							]}
+						>
+							<InputNumber min={1} max={65535} style={{ width: '100%' }} placeholder="8080" />
 						</Form.Item>
 
 						<Form.Item

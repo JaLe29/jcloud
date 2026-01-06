@@ -9,8 +9,8 @@ datasource db {
 // ----------------------
 
 model Cluster {
-  id        String @id @default(uuid())
-  name      String @unique
+  id         String @id @default(uuid())
+  name       String @unique
   kubeconfig String // Encrypted kubeconfig
 
   createdAt DateTime @default(now())
@@ -42,8 +42,9 @@ model Service {
   name String
 
   // Deployment settings
-  replicas   Int     @default(1)
-  ingressUrl String?
+  replicas     Int     @default(1)
+  containerPort Int    // Container port (required)
+  ingressUrl   String?
 
   // Resource requests (optional) - in millicores for CPU, MB for memory
   cpuRequest    Int?

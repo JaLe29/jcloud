@@ -1,3 +1,6 @@
+-- CreateEnum
+CREATE TYPE "TaskStatus" AS ENUM ('WAITING', 'EXECUTING', 'FAILED', 'DONE');
+
 -- CreateTable
 CREATE TABLE "Cluster" (
     "id" TEXT NOT NULL,
@@ -36,6 +39,21 @@ CREATE TABLE "Service" (
     "applicationId" TEXT NOT NULL,
 
     CONSTRAINT "Service_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Task" (
+    "id" TEXT NOT NULL,
+    "status" "TaskStatus" NOT NULL DEFAULT 'WAITING',
+    "log" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "meta" JSONB,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "startedAt" TIMESTAMP(3),
+    "finishedAt" TIMESTAMP(3),
+    "serviceId" TEXT NOT NULL,
+
+    CONSTRAINT "Task_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -121,6 +139,15 @@ CREATE INDEX "Service_applicationId_idx" ON "Service"("applicationId");
 CREATE UNIQUE INDEX "Service_applicationId_name_key" ON "Service"("applicationId", "name");
 
 -- CreateIndex
+CREATE INDEX "Task_serviceId_idx" ON "Task"("serviceId");
+
+-- CreateIndex
+CREATE INDEX "Task_status_idx" ON "Task"("status");
+
+-- CreateIndex
+CREATE INDEX "Task_createdAt_idx" ON "Task"("createdAt");
+
+-- CreateIndex
 CREATE INDEX "ServiceEnv_serviceId_idx" ON "ServiceEnv"("serviceId");
 
 -- CreateIndex
@@ -164,6 +191,9 @@ ALTER TABLE "Application" ADD CONSTRAINT "Application_clusterId_fkey" FOREIGN KE
 
 -- AddForeignKey
 ALTER TABLE "Service" ADD CONSTRAINT "Service_applicationId_fkey" FOREIGN KEY ("applicationId") REFERENCES "Application"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Task" ADD CONSTRAINT "Task_serviceId_fkey" FOREIGN KEY ("serviceId") REFERENCES "Service"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "ServiceEnv" ADD CONSTRAINT "ServiceEnv_serviceId_fkey" FOREIGN KEY ("serviceId") REFERENCES "Service"("id") ON DELETE CASCADE ON UPDATE CASCADE;
