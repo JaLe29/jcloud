@@ -1,8 +1,10 @@
-import { useState } from 'react';
-import { Layout as AntLayout, Menu, Typography, Button } from 'antd';
-import { AppstoreOutlined, HomeOutlined, MenuOutlined, LockOutlined, KeyOutlined, RocketOutlined, UnorderedListOutlined } from '@ant-design/icons';
+import { useState, useEffect } from 'react';
+import { Layout as AntLayout, Menu, Typography, Button, Select, Tag } from 'antd';
+import { AppstoreOutlined, HomeOutlined, MenuOutlined, LockOutlined, KeyOutlined, ClusterOutlined, ExclamationCircleOutlined, RocketOutlined, UnorderedListOutlined } from '@ant-design/icons';
 import type React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { trpc } from '../utils/trpc';
+import { useClusterStore } from '../stores/clusterStore';
 
 const { Header, Sider, Content } = AntLayout;
 const { Text } = Typography;
@@ -15,12 +17,19 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 	const navigate = useNavigate();
 	const location = useLocation();
 	const [collapsed, setCollapsed] = useState(false);
+	const { selectedClusterId, setSelectedClusterId } = useClusterStore();
+	const { data: clusters } = trpc.cluster.list.useQuery();
 
 	const menuItems = [
 		{
 			key: '/',
 			icon: <HomeOutlined />,
 			label: 'Dashboard',
+		},
+		{
+			key: '/clusters',
+			icon: <ClusterOutlined />,
+			label: 'Clusters',
 		},
 		{
 			key: '/applications',
@@ -53,6 +62,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 		if (location.pathname.startsWith('/applications')) {
 			return '/applications';
 		}
+		if (location.pathname.startsWith('/clusters')) {
+			return '/clusters';
+		}
 		if (location.pathname.startsWith('/deployments')) {
 			return '/deployments';
 		}
@@ -67,6 +79,18 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 		}
 		return location.pathname;
 	};
+
+
+	// Validate that the selected cluster (loaded from localStorage by persist middleware) still exists
+	useEffect(() => {
+		if (selectedClusterId && clusters) {
+			const clusterExists = clusters.some((c) => c.id === selectedClusterId);
+			if (!clusterExists) {
+				// Cluster was deleted, clear selection
+				setSelectedClusterId(null);
+			}
+		}
+	}, [selectedClusterId, clusters, setSelectedClusterId]);
 
 	const handleMenuClick = (key: string) => {
 		navigate(key);
@@ -134,6 +158,29 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 							icon={<MenuOutlined />}
 							onClick={() => setCollapsed(!collapsed)}
 						/>
+					</div>
+					<div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+						{clusters && clusters.length > 0 ? (
+							<Select
+								value={selectedClusterId}
+								onChange={setSelectedClusterId}
+								placeholder="Select cluster"
+								style={{ minWidth: 200 }}
+								options={clusters.map((cluster) => ({
+									label: cluster.name,
+									value: cluster.id,
+								}))}
+							/>
+						) : (
+							<Tag color="warning" icon={<ExclamationCircleOutlined />}>
+								No clusters available
+							</Tag>
+						)}
+						{clusters && clusters.length > 0 && !selectedClusterId && (
+							<Tag color="error" icon={<ExclamationCircleOutlined />}>
+								No cluster selected
+							</Tag>
+						)}
 					</div>
 				</Header>
 				<Content style={{ padding: 24 }}>

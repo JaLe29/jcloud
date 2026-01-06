@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useServerTable } from '../hooks/useServerTable';
 import { trpc } from '../utils/trpc';
+import { useClusterStore } from '../stores/clusterStore';
 
 const { Title, Text } = Typography;
 
@@ -14,6 +15,10 @@ interface ApplicationData {
 	name: string;
 	namespace: string;
 	createdAt: Date;
+	cluster?: {
+		id: string;
+		name: string;
+	};
 	_count: {
 		services: number;
 	};
@@ -26,6 +31,7 @@ interface ApplicationFilter {
 
 export const ApplicationsPage = () => {
 	const navigate = useNavigate();
+	const { selectedClusterId } = useClusterStore();
 	const table = useServerTable<ApplicationData, ApplicationFilter>({
 		initialPage: 1,
 		initialPageSize: 10,
@@ -49,7 +55,10 @@ export const ApplicationsPage = () => {
 		limit: table.pageSize,
 		sortBy: table.sortBy as 'createdAt' | 'updatedAt' | 'name' | 'namespace' | 'servicesCount' | undefined,
 		sortOrder: table.sortOrder,
-		filter: table.filter,
+		filter: {
+			...table.filter,
+			clusterId: selectedClusterId || undefined,
+		},
 	});
 
 	const columns: ColumnsType<ApplicationData> = [
@@ -70,6 +79,13 @@ export const ApplicationsPage = () => {
 			sorter: true,
 			sortOrder: table.getSortOrder('namespace'),
 			sortDirections: ['descend', 'ascend'],
+		},
+		{
+			title: 'Cluster',
+			key: 'cluster',
+			render: (_, record) => (
+				record.cluster ? <Tag color="blue">{record.cluster.name}</Tag> : <Text type="secondary">-</Text>
+			),
 		},
 		{
 			title: 'Services',
@@ -102,6 +118,26 @@ export const ApplicationsPage = () => {
 		return <Alert message="Error" description={error.message} type="error" showIcon />;
 	}
 
+	if (!selectedClusterId) {
+		return (
+			<Space direction="vertical" size="large" style={{ width: '100%' }}>
+				<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+					<div>
+						<Title level={2} style={{ marginBottom: 4 }}>Applications</Title>
+					</div>
+				</div>
+				<Card>
+					<Alert
+						message="No cluster selected"
+						description="Please select a cluster from the dropdown in the header to view applications."
+						type="warning"
+						showIcon
+					/>
+				</Card>
+			</Space>
+		);
+	}
+
 	return (
 		<Space direction="vertical" size="large" style={{ width: '100%' }}>
 			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
@@ -127,6 +163,7 @@ export const ApplicationsPage = () => {
 						type="primary"
 						icon={<PlusOutlined />}
 						onClick={() => navigate('/applications/new')}
+						disabled={!selectedClusterId}
 					>
 						New Application
 					</Button>

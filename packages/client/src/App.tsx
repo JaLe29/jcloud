@@ -4,6 +4,7 @@ import type React from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { HomePage } from './pages/HomePage';
+import { ClustersPage } from './pages/ClustersPage';
 import { ApplicationsPage } from './pages/ApplicationsPage';
 import { ApplicationDetailPage } from './pages/ApplicationDetailPage';
 import { ApplicationFormPage } from './pages/ApplicationFormPage';
@@ -32,6 +33,14 @@ export const App: React.FC = () => {
 			element: (
 				<Layout>
 					<HomePage />
+				</Layout>
+			),
+		},
+		{
+			path: '/clusters',
+			element: (
+				<Layout>
+					<ClustersPage />
 				</Layout>
 			),
 		},

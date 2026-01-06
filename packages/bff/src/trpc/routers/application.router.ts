@@ -8,6 +8,7 @@ const applicationFilterSchema = z
 	.object({
 		name: z.string().optional(),
 		namespace: z.string().optional(),
+		clusterId: z.string().uuid().optional(),
 	})
 	.optional();
 
@@ -19,6 +20,7 @@ const applicationPaginationSchema = createPaginationInputSchema(
 const createApplicationSchema = z.object({
 	name: z.string().min(1).max(100),
 	namespace: z.string().min(1).max(100),
+	clusterId: z.string().uuid(),
 });
 
 const updateApplicationSchema = z.object({
@@ -52,6 +54,10 @@ export const applicationRouter = (router: Router, procedure: Procedure) => {
 					};
 				}
 
+				if (input?.filter?.clusterId) {
+					where.clusterId = input.filter.clusterId;
+				}
+
 				const total = await ctx.prisma.application.count({ where });
 
 				let orderBy: Prisma.ApplicationOrderByWithRelationInput = {};
@@ -73,6 +79,12 @@ export const applicationRouter = (router: Router, procedure: Procedure) => {
 					take,
 					orderBy,
 					include: {
+						cluster: {
+							select: {
+								id: true,
+								name: true,
+							},
+						},
 						services: {
 							select: {
 								id: true,
@@ -100,6 +112,12 @@ export const applicationRouter = (router: Router, procedure: Procedure) => {
 				const application = await ctx.prisma.application.findUnique({
 					where: { id: input.id },
 					include: {
+						cluster: {
+							select: {
+								id: true,
+								name: true,
+							},
+						},
 						services: {
 							orderBy: { createdAt: 'desc' },
 							include: {
@@ -148,10 +166,23 @@ export const applicationRouter = (router: Router, procedure: Procedure) => {
 					});
 				}
 
+				// Verify cluster exists
+				const cluster = await ctx.prisma.cluster.findUnique({
+					where: { id: input.clusterId },
+				});
+
+				if (!cluster) {
+					throw new TRPCError({
+						code: 'NOT_FOUND',
+						message: 'Cluster not found',
+					});
+				}
+
 				const application = await ctx.prisma.application.create({
 					data: {
 						name: input.name,
 						namespace: input.namespace,
+						clusterId: input.clusterId,
 					},
 				});
 

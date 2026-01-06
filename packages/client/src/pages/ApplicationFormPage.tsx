@@ -1,14 +1,16 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { Card, Typography, Space, Button, Form, Input, message, Spin } from 'antd';
+import { Card, Typography, Space, Button, Form, Input, message, Spin, Select, Alert } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
 import { useEffect } from 'react';
 import { trpc } from '../utils/trpc';
+import { useClusterStore } from '../stores/clusterStore';
 
 const { Title, Text } = Typography;
 
 interface ApplicationFormValues {
 	name: string;
 	namespace: string;
+	clusterId: string;
 }
 
 export const ApplicationFormPage = () => {
@@ -16,8 +18,11 @@ export const ApplicationFormPage = () => {
 	const navigate = useNavigate();
 	const utils = trpc.useUtils();
 	const [form] = Form.useForm<ApplicationFormValues>();
+	const { selectedClusterId } = useClusterStore();
 
 	const isEditing = !!id;
+
+	const { data: clusters } = trpc.cluster.list.useQuery();
 
 	const { data: application, isLoading: isLoadingApplication } = trpc.application.getById.useQuery(
 		{ id: id! },
@@ -55,9 +60,18 @@ export const ApplicationFormPage = () => {
 			form.setFieldsValue({
 				name: application.name,
 				namespace: application.namespace,
+				clusterId: application.clusterId,
 			});
+		} else if (!isEditing && selectedClusterId && clusters) {
+			// Only pre-fill if the selected cluster actually exists in the list
+			const clusterExists = clusters.some((c) => c.id === selectedClusterId);
+			if (clusterExists) {
+				form.setFieldsValue({
+					clusterId: selectedClusterId,
+				});
+			}
 		}
-	}, [application, form]);
+	}, [application, form, isEditing, selectedClusterId, clusters]);
 
 	const handleSubmit = (values: ApplicationFormValues) => {
 		if (isEditing) {
@@ -66,7 +80,15 @@ export const ApplicationFormPage = () => {
 				name: values.name,
 			});
 		} else {
-			createMutation.mutate(values);
+			if (!values.clusterId) {
+				message.error('Please select a cluster');
+				return;
+			}
+			createMutation.mutate({
+				name: values.name,
+				namespace: values.namespace,
+				clusterId: values.clusterId,
+			});
 		}
 	};
 
@@ -98,12 +120,37 @@ export const ApplicationFormPage = () => {
 						</Text>
 					</div>
 
+					{!isEditing && !selectedClusterId && (
+						<Alert
+							message="No cluster selected"
+							description="Please select a cluster from the dropdown in the header before creating an application."
+							type="warning"
+							showIcon
+						/>
+					)}
+
 					<Form
 						form={form}
 						layout="vertical"
 						onFinish={handleSubmit}
 						requiredMark={false}
 					>
+						<Form.Item
+							label="Cluster"
+							name="clusterId"
+							rules={[{ required: !isEditing, message: 'Required' }]}
+							extra={isEditing ? 'Cannot be changed' : undefined}
+						>
+							<Select
+								placeholder="Select cluster"
+								disabled={isEditing}
+								options={clusters?.map((cluster) => ({
+									label: cluster.name,
+									value: cluster.id,
+								}))}
+							/>
+						</Form.Item>
+
 						<Form.Item
 							label="Name"
 							name="name"
@@ -134,6 +181,7 @@ export const ApplicationFormPage = () => {
 									htmlType="submit"
 									icon={<SaveOutlined />}
 									loading={isPending}
+									disabled={!isEditing && !selectedClusterId}
 								>
 									{isEditing ? 'Save' : 'Create'}
 								</Button>
