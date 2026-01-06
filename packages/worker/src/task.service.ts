@@ -1,4 +1,10 @@
-import { type DeployTaskMeta, decrypt, isDeployTaskMeta } from '@jcloud/backend-shared';
+import {
+	type DeployTaskMeta,
+	decrypt,
+	isDeployTaskMeta,
+	isServiceUpdateTaskMeta,
+	type ServiceUpdateTaskMeta,
+} from '@jcloud/backend-shared';
 import {
 	AppsV1Api,
 	CoreV1Api,
@@ -392,12 +398,20 @@ export class TaskService {
 		});
 
 		try {
-			if (!isDeployTaskMeta(task.meta)) {
+			let image: string;
+
+			if (isDeployTaskMeta(task.meta)) {
+				const deployMeta: DeployTaskMeta = task.meta;
+				image = deployMeta.image;
+			} else if (isServiceUpdateTaskMeta(task.meta)) {
+				const updateMeta: ServiceUpdateTaskMeta = task.meta;
+				image = updateMeta.image;
+			} else {
 				await this.failTask(task.id, `Unknown task meta type for task ${task.id}`);
 				return;
 			}
-			const meta: DeployTaskMeta = task.meta;
-			console.log(meta);
+
+			console.log(`Processing task ${task.id} with image ${image}`);
 
 			// Get service with application (including cluster) and docker secrets
 			const service = await this.prisma.service.findUnique({
@@ -450,7 +464,7 @@ export class TaskService {
 			await this.createDeployment(appsApi, {
 				name: service.name,
 				namespace,
-				image: meta.image,
+				image,
 				replicas: service.replicas,
 				containerPort: service.containerPort,
 				imagePullSecrets,

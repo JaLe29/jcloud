@@ -1,7 +1,7 @@
 import { TRPCError } from '@trpc/server';
 import type { Prisma } from '@prisma/client';
 import { z } from 'zod';
-import { createDeployTaskMeta } from '@jcloud/backend-shared';
+import { createDeployTaskMeta, createServiceUpdateTaskMeta } from '@jcloud/backend-shared';
 import type { Procedure, Router } from '../router';
 import { getPaginationMeta, getPaginationParams, createPaginationInputSchema } from '../../utils/pagination';
 
@@ -163,13 +163,23 @@ export const serviceRouter = (router: Router, procedure: Procedure) => {
 				return service;
 			}),
 
-		update: procedure
+			update: procedure
 			.input(updateServiceSchema)
 			.mutation(async ({ ctx, input }) => {
 				const { id, ...data } = input;
 
 				const existing = await ctx.prisma.service.findUnique({
 					where: { id },
+					include: {
+						apiKey: {
+							include: {
+								deploys: {
+									orderBy: { createdAt: 'desc' },
+									take: 1,
+								},
+							},
+						},
+					},
 				});
 
 				if (!existing) {
@@ -199,6 +209,19 @@ export const serviceRouter = (router: Router, procedure: Procedure) => {
 					where: { id },
 					data,
 				});
+
+				// Create task for service update if there's a deployed image
+				if (existing.apiKey && existing.apiKey.deploys.length > 0) {
+					const latestDeploy = existing.apiKey.deploys[0];
+					if (latestDeploy) {
+						await ctx.prisma.task.create({
+							data: {
+								serviceId: id,
+								meta: createServiceUpdateTaskMeta(latestDeploy.image) as unknown as Prisma.InputJsonValue,
+							},
+						});
+					}
+				}
 
 				return service;
 			}),

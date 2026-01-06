@@ -1,9 +1,9 @@
 import cors from '@fastify/cors';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '@prisma/client';
 import type { FastifyInstance } from 'fastify';
 import Fastify from 'fastify';
-import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
-import { PrismaPg } from '@prisma/adapter-pg';
 import { TaskService } from './task.service';
 
 interface ServerOptions {
@@ -32,7 +32,7 @@ export class Server {
 
 	private initSystemRoutes() {
 		this.server.get('/ready', () => ({ status: 'ok' }));
-	} 
+	}
 
 	private async tick() {
 		try {
@@ -42,7 +42,7 @@ export class Server {
 			});
 			if (!task) return;
 			await this.taskService.run(task);
-		}finally {
+		} finally {
 			setTimeout(() => this.tick(), 1000);
 		}
 	}
@@ -50,7 +50,7 @@ export class Server {
 	async listen() {
 		await this.server.register(cors, {});
 
-		this.initSystemRoutes(); 
+		this.initSystemRoutes();
 
 		await this.server.listen({ port: this.options.port, host: '0.0.0.0' });
 
@@ -58,7 +58,6 @@ export class Server {
 		console.log(`${this.options.appName} running on port http://localhost:${this.options.port}`);
 
 		this.tick();
-
 	}
 
 	async close() {
