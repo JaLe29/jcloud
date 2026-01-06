@@ -33,6 +33,7 @@ interface DeploymentConfig {
 	replicas: number;
 	containerPort: number;
 	imagePullSecrets: string[];
+	env: Array<{ name: string; value: string }>;
 	resources: {
 		cpuRequest?: number | null;
 		cpuLimit?: number | null;
@@ -232,6 +233,7 @@ export class TaskService {
 										protocol: 'TCP',
 									},
 								],
+								env: config.env.length > 0 ? config.env : undefined,
 								resources: Object.keys(resources).length > 0 ? resources : undefined,
 							},
 						],
@@ -413,7 +415,7 @@ export class TaskService {
 
 			console.log(`Processing task ${task.id} with image ${image}`);
 
-			// Get service with application (including cluster) and docker secrets
+			// Get service with application (including cluster), docker secrets, and env variables
 			const service = await this.prisma.service.findUnique({
 				where: { id: task.serviceId },
 				include: {
@@ -425,6 +427,11 @@ export class TaskService {
 					dockerSecrets: {
 						include: {
 							dockerSecret: true,
+						},
+					},
+					envs: {
+						include: {
+							env: true,
 						},
 					},
 				},
@@ -460,6 +467,24 @@ export class TaskService {
 				imagePullSecrets.push(dockerSecret.name);
 			}
 
+			// Load and decrypt environment variables
+			const envVars: Array<{ name: string; value: string }> = [];
+			for (const { env } of service.envs) {
+				try {
+					const decryptedValue = decrypt(env.value);
+					envVars.push({
+						name: env.key,
+						value: decryptedValue,
+					});
+				} catch (error) {
+					await this.appendLog(
+						task.id,
+						`Warning: Failed to decrypt env variable ${env.key}: ${error instanceof Error ? error.message : String(error)}`,
+					);
+					console.error(`Failed to decrypt env variable ${env.key}:`, error);
+				}
+			}
+
 			// Create or update deployment
 			await this.createDeployment(appsApi, {
 				name: service.name,
@@ -468,6 +493,7 @@ export class TaskService {
 				replicas: service.replicas,
 				containerPort: service.containerPort,
 				imagePullSecrets,
+				env: envVars,
 				resources: {
 					cpuRequest: service.cpuRequest,
 					cpuLimit: service.cpuLimit,
