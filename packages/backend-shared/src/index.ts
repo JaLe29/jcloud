@@ -5,6 +5,6 @@ export {
 	type DeployTaskMeta,
 	type TaskMeta,
 	createDeployTaskMeta,
-	isDeployTaskMeta,
 	getTaskTypeLabel,
+	isDeployTaskMeta,
 } from './task';

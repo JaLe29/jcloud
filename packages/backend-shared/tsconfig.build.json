@@ -9,10 +9,9 @@
 		"tsBuildInfoFile": ".cache/typescript/backend-shared.tsbuildinfo",
 		"declaration": true,
 		"declarationMap": true,
+		"composite": true,
 		"types": [
 			"node"
 		]
 	}
 }
-
-

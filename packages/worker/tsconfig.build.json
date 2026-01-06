@@ -13,8 +13,9 @@
 		"isolatedModules": false,
 		"types": [
 			"node"
-		],
-		"baseUrl": ".",
-		"paths": {}
-	}
+		]
+	},
+	"references": [
+		{ "path": "../backend-shared/tsconfig.build.json" }
+	]
 }
