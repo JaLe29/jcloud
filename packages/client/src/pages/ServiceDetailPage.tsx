@@ -1,10 +1,12 @@
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Card, Typography, Space, Button, Modal, message, Descriptions, Tag, Divider } from 'antd';
+import { Card, Typography, Space, Button, Modal, message, Descriptions, Tag, Input, Form } from 'antd';
 import {
 	ArrowLeftOutlined,
 	DeleteOutlined,
 	EditOutlined,
 	LinkOutlined,
+	RocketOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { trpc } from '../utils/trpc';
@@ -27,6 +29,8 @@ export const ServiceDetailPage = () => {
 		},
 	);
 
+	const [deployImage, setDeployImage] = useState('');
+
 	const deleteServiceMutation = trpc.service.delete.useMutation({
 		onSuccess: () => {
 			message.success('Service deleted');
@@ -36,6 +40,27 @@ export const ServiceDetailPage = () => {
 			message.error(error.message);
 		},
 	});
+
+	const deployMutation = trpc.service.deploy.useMutation({
+		onSuccess: (data) => {
+			message.success(`Deployment started: ${data.image}`);
+			setDeployImage('');
+			utils.apikey.getDeployHistory.invalidate();
+		},
+		onError: (error) => {
+			message.error(error.message);
+		},
+	});
+
+	const handleDeploy = () => {
+		if (!deployImage.trim()) {
+			message.warning('Please enter a Docker image');
+			return;
+		}
+		if (serviceId) {
+			deployMutation.mutate({ serviceId, image: deployImage.trim() });
+		}
+	};
 
 	const handleDelete = () => {
 		Modal.confirm({
@@ -154,6 +179,35 @@ export const ServiceDetailPage = () => {
 			</Card>
 
 			<ServiceDockerSecrets serviceId={service.id} />
+
+			<Card title="Manual Deployment">
+				<Space direction="vertical" style={{ width: '100%' }} size="middle">
+					<Typography.Text type="secondary">
+						Deploy a Docker image to this service manually (without using the API key)
+					</Typography.Text>
+					<Form layout="inline" style={{ width: '100%' }}>
+						<Form.Item style={{ flex: 1, marginRight: 8 }}>
+							<Input
+								placeholder="Docker image (e.g. ghcr.io/user/app:latest)"
+								value={deployImage}
+								onChange={(e) => setDeployImage(e.target.value)}
+								onPressEnter={handleDeploy}
+								disabled={deployMutation.isPending}
+							/>
+						</Form.Item>
+						<Form.Item>
+							<Button
+								type="primary"
+								icon={<RocketOutlined />}
+								onClick={handleDeploy}
+								loading={deployMutation.isPending}
+							>
+								Deploy
+							</Button>
+						</Form.Item>
+					</Form>
+				</Space>
+			</Card>
 
 			<ApiDeployHistory serviceId={service.id} />
 

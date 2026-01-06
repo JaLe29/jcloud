@@ -219,5 +219,66 @@ export const serviceRouter = (router: Router, procedure: Procedure) => {
 
 				return { success: true };
 			}),
+
+		deploy: procedure
+			.input(z.object({
+				serviceId: z.string().uuid(),
+				image: z.string().min(1, 'Docker image is required'),
+			}))
+			.mutation(async ({ ctx, input }) => {
+				// Verify service exists
+				const service = await ctx.prisma.service.findUnique({
+					where: { id: input.serviceId },
+					include: {
+						application: {
+							select: {
+								id: true,
+								name: true,
+								namespace: true,
+							},
+						},
+					},
+				});
+
+				if (!service) {
+					throw new TRPCError({
+						code: 'NOT_FOUND',
+						message: 'Service not found',
+					});
+				}
+
+				// Get API key for the service
+				const apiKey = await ctx.prisma.apiKey.findUnique({
+					where: { serviceId: input.serviceId },
+				});
+
+				if (!apiKey) {
+					throw new TRPCError({
+						code: 'PRECONDITION_FAILED',
+						message: 'API key must be generated first before deploying',
+					});
+				}
+
+				// Record the deployment
+				const deploy = await ctx.prisma.apiDeploy.create({
+					data: {
+						apiKeyId: apiKey.id,
+						image: input.image,
+					},
+				});
+
+				// TODO: Actually deploy to Kubernetes here
+
+				return {
+					success: true,
+					deploymentId: deploy.id,
+					service: {
+						id: service.id,
+						name: service.name,
+					},
+					image: input.image,
+					deployedAt: deploy.createdAt,
+				};
+			}),
 	});
 };
