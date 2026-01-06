@@ -44,9 +44,36 @@ model Service {
   envs          ServiceEnv[]
   apiKey        ApiKey?
   dockerSecrets ServiceDockerSecret[]
+  tasks         Task[]
 
   @@unique([applicationId, name])
   @@index([applicationId])
+}
+
+enum TaskStatus {
+  WAITING
+  EXECUTING
+  FAILED
+  DONE
+}
+
+model Task {
+  id     String     @id @default(uuid())
+  status TaskStatus @default(WAITING)
+  log    String[]   @default([]) // Task execution log (array for appending)
+  meta   Json? // Optional metadata (e.g. image, params, etc.)
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  startedAt  DateTime? // When execution started
+  finishedAt DateTime? // When execution finished
+
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  serviceId String
+
+  @@index([serviceId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model Env {

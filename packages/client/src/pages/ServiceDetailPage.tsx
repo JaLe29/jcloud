@@ -13,6 +13,7 @@ import { trpc } from '../utils/trpc';
 import { ServiceApiKey } from '../components/features/ServiceApiKey';
 import { ApiDeployHistory } from '../components/features/ApiDeployHistory';
 import { ServiceDockerSecrets } from '../components/features/ServiceDockerSecrets';
+import { ServiceTasks } from '../components/features/ServiceTasks';
 
 const { Title, Text } = Typography;
 
@@ -210,6 +211,8 @@ export const ServiceDetailPage = () => {
 			</Card>
 
 			<ApiDeployHistory serviceId={service.id} />
+
+			<ServiceTasks serviceId={service.id} />
 
 			<Card title="Environment Variables">
 				<Space direction="vertical" style={{ width: '100%' }}>
