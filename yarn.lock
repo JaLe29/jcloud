@@ -978,12 +978,23 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@jcloud/backend-shared@workspace:*, @jcloud/backend-shared@workspace:packages/backend-shared":
+  version: 0.0.0-use.local
+  resolution: "@jcloud/backend-shared@workspace:packages/backend-shared"
+  dependencies:
+    "@types/node": "npm:^20.11.1"
+    rimraf: "npm:^6.1.2"
+    typescript: "npm:^5.9.3"
+  languageName: unknown
+  linkType: soft
+
 "@jcloud/bff@workspace:packages/bff":
   version: 0.0.0-use.local
   resolution: "@jcloud/bff@workspace:packages/bff"
   dependencies:
     "@fastify/cors": "npm:^11.2.0"
     "@fastify/static": "npm:^9.0.0"
+    "@jcloud/backend-shared": "workspace:*"
     "@prisma/adapter-pg": "npm:^7.2.0"
     "@prisma/client": "npm:^7.2.0"
     "@trpc/server": "npm:^10.45.2"
@@ -1052,6 +1063,7 @@ __metadata:
   resolution: "@jcloud/worker@workspace:packages/worker"
   dependencies:
     "@fastify/cors": "npm:^11.2.0"
+    "@jcloud/backend-shared": "workspace:*"
     "@kubernetes/client-node": "npm:^1.4.0"
     "@prisma/adapter-pg": "npm:^7.2.0"
     "@prisma/client": "npm:^7.2.0"

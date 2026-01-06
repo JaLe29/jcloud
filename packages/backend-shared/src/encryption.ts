@@ -5,6 +5,7 @@ const IV_LENGTH = 16;
 const TAG_LENGTH = 16;
 
 function getEncryptionKey(): Uint8Array {
+	// node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 	const key = process.env.ENCRYPTION_KEY;
 	if (!key) {
 		throw new Error('ENCRYPTION_KEY environment variable is not set');
@@ -12,6 +13,22 @@ function getEncryptionKey(): Uint8Array {
 	// Hash the key to ensure it's exactly 32 bytes
 	const hash = crypto.createHash('sha256').update(key).digest();
 	return new Uint8Array(hash);
+}
+
+export function encrypt(text: string): string {
+	const key = getEncryptionKey();
+	const iv = new Uint8Array(crypto.randomBytes(IV_LENGTH));
+	const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
+
+	let encrypted = cipher.update(text, 'utf8', 'hex');
+	encrypted += cipher.final('hex');
+
+	const authTag = cipher.getAuthTag();
+
+	// Return IV + AuthTag + Encrypted data as hex
+	const ivHex = Buffer.from(iv).toString('hex');
+	const tagHex = authTag.toString('hex');
+	return ivHex + tagHex + encrypted;
 }
 
 export function decrypt(encryptedText: string): string {
@@ -38,4 +55,5 @@ export function decrypt(encryptedText: string): string {
 		);
 	}
 }
+
 

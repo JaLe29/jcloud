@@ -3,7 +3,7 @@ import type { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import type { Procedure, Router } from '../router';
 import { getPaginationMeta, getPaginationParams, createPaginationInputSchema } from '../../utils/pagination';
-import { encrypt, decrypt } from '../../utils/encryption';
+import { encrypt, decrypt } from '@jcloud/backend-shared';
 
 const envFilterSchema = z
 	.object({

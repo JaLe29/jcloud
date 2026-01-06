@@ -1,4 +1,4 @@
-name: ⚙️ BFF workflow
+name: ⚙️ Worker workflow
 
 on:
     push:
@@ -7,13 +7,12 @@ on:
         paths:
             - "packages/backend-shared/**"
             - "packages/db/**"
-            - "packages/bff/**"
-            - "packages/client/**"
-            - ".github/workflows/bff.yml"
+            - "packages/worker/**"
+            - ".github/workflows/worker.yml"
 
 env:
     NODE_VERSION: "20.x"
-    TAG: jcloud-bff-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}-dev
+    TAG: jcloud-worker-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}-dev
 
 jobs:
     build-and-deploy:
@@ -36,7 +35,7 @@ jobs:
               uses: docker/build-push-action@v5
               with:
                   context: .
-                  file: ./packages/bff/Dockerfile
+                  file: ./packages/worker/Dockerfile
                   push: true
                   tags: ${{ vars.REGISTRY_URL }}:${{ env.TAG }}
                   cache-from: type=registry,ref=${{ vars.REGISTRY_URL }}:buildcache
@@ -50,5 +49,6 @@ jobs:
             #       curl -X POST \
             #         -H "Content-Type: application/json" \
             #         -H "Authorization: ${{ secrets.N8N_WEBHOOK_TOKEN }}" \
-            #         -d '{"project":"dev-jcloud-bff", "image":"${{ vars.REGISTRY_URL }}:${{ env.TAG }}"}' \
+            #         -d '{"project":"dev-jcloud-worker", "image":"${{ vars.REGISTRY_URL }}:${{ env.TAG }}"}' \
             #         ${{ vars.DEPLOY_N8N_URL }}
+

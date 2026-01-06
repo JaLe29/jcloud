@@ -1,0 +1,18 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"include": [
+		"src"
+	],
+	"compilerOptions": {
+		"outDir": "dist",
+		"rootDir": "src",
+		"tsBuildInfoFile": ".cache/typescript/backend-shared.tsbuildinfo",
+		"declaration": true,
+		"declarationMap": true,
+		"types": [
+			"node"
+		]
+	}
+}
+
+

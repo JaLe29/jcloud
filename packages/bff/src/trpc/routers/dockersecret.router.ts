@@ -1,7 +1,7 @@
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import type { Procedure, Router } from '../router';
-import { encrypt, decrypt } from '../../utils/encryption';
+import { encrypt, decrypt } from '@jcloud/backend-shared';
 
 const createDockerSecretSchema = z.object({
 	name: z.string().min(1).max(100),

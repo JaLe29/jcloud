@@ -37,7 +37,7 @@
     "baseUrl": ".",
     "paths": {
       "@jcloud/*": [
-        "packages/*/src",
+        "packages/*/src"
       ]
     },
     "allowSyntheticDefaultImports": true,

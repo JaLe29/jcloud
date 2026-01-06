@@ -1,7 +1,7 @@
 import { AppsV1Api, CoreV1Api, KubeConfig, V1Deployment, V1Namespace, V1Secret } from "@kubernetes/client-node";
 import { PrismaClient, Task } from "@prisma/client";
 import { KUBECONFIG } from "./const";
-import { decrypt } from "./utils/encryption";
+import { decrypt } from "@jcloud/backend-shared";
 import { toK8sName } from "./utils/k8s";
 
 interface DockerSecretData {

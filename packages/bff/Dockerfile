@@ -10,14 +10,16 @@ COPY ./package.json													./
 COPY ./tsconfig.base.json											./
 COPY ./yarn.lock													./
 
+COPY ./packages/backend-shared										./packages/backend-shared
 COPY ./packages/bff 												./packages/bff
 COPY ./packages/client												./packages/client
-COPY ./packages/db												./packages/db
+COPY ./packages/db													./packages/db
 
 ENV DATABASE_URL=dockerbuildisempty
 
 RUN yarn install && \
 	yarn workspace @jcloud/db prisma:generate && \
+	yarn workspace @jcloud/backend-shared build && \
 	yarn workspace @jcloud/client build && \
 	yarn workspace @jcloud/bff build && \
 	yarn workspaces focus @jcloud/bff --production
@@ -30,6 +32,9 @@ COPY --from=build /usr/app/package.json								./package.json
 
 COPY --from=build /usr/app/packages/bff/package.json				./packages/bff/package.json
 COPY --from=build /usr/app/packages/bff/dist						./packages/bff/dist
+
+COPY --from=build /usr/app/packages/backend-shared	/package.json				./packages/backend-shared	/package.json
+COPY --from=build /usr/app/packages/backend-shared	/dist						./packages/backend-shared	/dist
 
 COPY --from=build /usr/app/packages/client/dist						./packages/client/dist
 
