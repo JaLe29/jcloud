@@ -56,6 +56,8 @@ interface DeploymentConfig {
 		successThreshold?: number | null;
 		failureThreshold?: number | null;
 	} | null;
+	maxSurge?: string | null;
+	maxUnavailable?: string | null;
 }
 
 interface ServiceConfig {
@@ -252,6 +254,22 @@ export class TaskService {
 				}
 			: undefined;
 
+		// Build rolling update strategy
+		const rollingUpdate: { maxSurge?: string; maxUnavailable?: string } = {};
+		if (config.maxSurge) {
+			rollingUpdate.maxSurge = config.maxSurge;
+		}
+		if (config.maxUnavailable) {
+			rollingUpdate.maxUnavailable = config.maxUnavailable;
+		}
+
+		const strategy = Object.keys(rollingUpdate).length > 0
+			? {
+					type: 'RollingUpdate',
+					rollingUpdate,
+				}
+			: undefined;
+
 		const deployment: V1Deployment = {
 			metadata: {
 				name: deploymentName,
@@ -259,6 +277,7 @@ export class TaskService {
 			},
 			spec: {
 				replicas: config.replicas,
+				strategy,
 				selector: {
 					matchLabels: {
 						app: deploymentName,
@@ -310,6 +329,9 @@ export class TaskService {
 			if (config.readinessProbe) {
 				await this.appendLog(taskId, `  Readiness Probe: ${config.readinessProbe.path}`);
 			}
+			if (config.maxSurge || config.maxUnavailable) {
+				await this.appendLog(taskId, `  Rolling Update: maxSurge=${config.maxSurge || 'default'}, maxUnavailable=${config.maxUnavailable || 'default'}`);
+			}
 			const response = await appsApi.replaceNamespacedDeployment({
 				name: deploymentName,
 				namespace: k8sNamespace,
@@ -335,6 +357,9 @@ export class TaskService {
 		}
 		if (config.readinessProbe) {
 			await this.appendLog(taskId, `  Readiness Probe: ${config.readinessProbe.path}`);
+		}
+		if (config.maxSurge || config.maxUnavailable) {
+			await this.appendLog(taskId, `  Rolling Update: maxSurge=${config.maxSurge || 'default'}, maxUnavailable=${config.maxUnavailable || 'default'}`);
 		}
 		if (config.env.length > 0) {
 			await this.appendLog(taskId, `  Environment Variables: ${config.env.length}`);
@@ -625,6 +650,8 @@ export class TaskService {
 							failureThreshold: service.readinessProbeFailureThreshold,
 						}
 					: null,
+				maxSurge: service.maxSurge,
+				maxUnavailable: service.maxUnavailable,
 			}, task.id);
 
 			// Create Kubernetes Service (using the same deployment name for selector)

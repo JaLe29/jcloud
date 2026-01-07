@@ -39,6 +39,8 @@ const createServiceSchema = z.object({
 	readinessProbeTimeoutSeconds: z.number().int().min(1).optional().nullable(),
 	readinessProbeSuccessThreshold: z.number().int().min(1).optional().nullable(),
 	readinessProbeFailureThreshold: z.number().int().min(1).optional().nullable(),
+	maxSurge: z.string().optional().nullable(),
+	maxUnavailable: z.string().optional().nullable(),
 });
 
 const updateServiceSchema = z.object({
@@ -63,6 +65,8 @@ const updateServiceSchema = z.object({
 	readinessProbeTimeoutSeconds: z.number().int().min(1).optional().nullable(),
 	readinessProbeSuccessThreshold: z.number().int().min(1).optional().nullable(),
 	readinessProbeFailureThreshold: z.number().int().min(1).optional().nullable(),
+	maxSurge: z.string().optional().nullable(),
+	maxUnavailable: z.string().optional().nullable(),
 });
 
 export const serviceRouter = (router: Router, procedure: Procedure) => {

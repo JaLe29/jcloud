@@ -70,6 +70,10 @@ model Service {
   readinessProbeSuccessThreshold    Int?
   readinessProbeFailureThreshold    Int?
 
+  // Rolling update settings
+  maxSurge      String? // e.g. "25%" or "1"
+  maxUnavailable String? // e.g. "25%" or "0"
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

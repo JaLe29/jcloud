@@ -28,6 +28,8 @@ interface ServiceFormValues {
 	readinessProbeTimeoutSeconds?: number | null;
 	readinessProbeSuccessThreshold?: number | null;
 	readinessProbeFailureThreshold?: number | null;
+	maxSurge?: string | null;
+	maxUnavailable?: string | null;
 }
 
 interface EnvData {
@@ -111,6 +113,8 @@ export const ServiceFormPage = () => {
 				readinessProbeTimeoutSeconds: service.readinessProbeTimeoutSeconds,
 				readinessProbeSuccessThreshold: service.readinessProbeSuccessThreshold,
 				readinessProbeFailureThreshold: service.readinessProbeFailureThreshold,
+				maxSurge: service.maxSurge,
+				maxUnavailable: service.maxUnavailable,
 			});
 		}
 	}, [service, form]);
@@ -304,6 +308,27 @@ export const ServiceFormPage = () => {
 								</div>
 							</Card>
 						</Space>
+
+						<Divider>Rolling Update</Divider>
+
+						<Card size="small" title="Rolling Update Strategy">
+							<Space direction="vertical" style={{ width: '100%' }}>
+								<Form.Item
+									label="Max Surge"
+									name="maxSurge"
+									tooltip="Maximum number of pods that can be created above the desired number of pods. Can be a number (e.g., '1') or a percentage (e.g., '25%')."
+								>
+									<Input placeholder="25% or 1" />
+								</Form.Item>
+								<Form.Item
+									label="Max Unavailable"
+									name="maxUnavailable"
+									tooltip="Maximum number of pods that can be unavailable during the update. Can be a number (e.g., '0') or a percentage (e.g., '25%')."
+								>
+									<Input placeholder="25% or 0" />
+								</Form.Item>
+							</Space>
+						</Card>
 
 						<Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
 							<Space>
