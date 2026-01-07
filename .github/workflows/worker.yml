@@ -44,11 +44,11 @@ jobs:
                       COMMIT_HASH=${{ github.sha }}
                       BUILD_DATE=${{ github.run_started_at }}
 
-            # - name: Call n8n webhook
-            #   run: |
-            #       curl -X POST \
-            #         -H "Content-Type: application/json" \
-            #         -H "Authorization: ${{ secrets.N8N_WEBHOOK_TOKEN }}" \
-            #         -d '{"project":"dev-jcloud-worker", "image":"${{ vars.REGISTRY_URL }}:${{ env.TAG }}"}' \
-            #         ${{ vars.DEPLOY_N8N_URL }}
+            - name: Call jcloud-deploy webhook
+              run: |
+                  curl -X POST \
+                    -H "Content-Type: application/json" \
+                    -H "x-api-key: ${{ secrets.WORKER_API_KEY }}" \
+                    -d '{"image":"${{ vars.REGISTRY_URL }}:${{ env.TAG }}"}' \
+                    https://jcloud-api.jale.cz/deploy
 
