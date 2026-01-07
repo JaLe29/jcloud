@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Env" ALTER COLUMN "name" DROP DEFAULT;

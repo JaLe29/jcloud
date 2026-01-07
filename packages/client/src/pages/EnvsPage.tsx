@@ -20,6 +20,7 @@ interface ServiceInfo {
 
 interface EnvData {
 	id: string;
+	name: string;
 	key: string;
 	value: string;
 	createdAt: Date;
@@ -33,6 +34,7 @@ interface EnvFilter {
 }
 
 interface EnvFormValues {
+	name: string;
 	key: string;
 	value: string;
 	serviceIds: string[];
@@ -204,6 +206,7 @@ export const EnvsPage = () => {
 	useEffect(() => {
 		if (envDetail && editingEnv) {
 			form.setFieldsValue({
+				name: envDetail.name,
 				key: envDetail.key,
 				value: envDetail.value,
 				serviceIds: envDetail.services.map((s) => s.id),
@@ -221,12 +224,14 @@ export const EnvsPage = () => {
 		if (editingEnv) {
 			updateMutation.mutate({
 				id: editingEnv.id,
+				name: values.name,
 				key: values.key,
 				value: values.value,
 				serviceIds: values.serviceIds,
 			});
 		} else {
 			createMutation.mutate({
+				name: values.name,
 				key: values.key,
 				value: values.value,
 				serviceIds: values.serviceIds,
@@ -250,6 +255,12 @@ export const EnvsPage = () => {
 	};
 
 	const columns: ColumnsType<EnvData> = [
+		{
+			title: 'Name',
+			dataIndex: 'name',
+			key: 'name',
+			render: (text: string) => text || <Text type="secondary">—</Text>,
+		},
 		{
 			title: 'Key',
 			dataIndex: 'key',
@@ -426,6 +437,13 @@ export const EnvsPage = () => {
 					requiredMark={false}
 					style={{ marginTop: 24 }}
 				>
+					<Form.Item
+						label="Name"
+						name="name"
+					>
+						<Input placeholder="Optional descriptive name" />
+					</Form.Item>
+
 					<Form.Item
 						label="Key"
 						name="key"

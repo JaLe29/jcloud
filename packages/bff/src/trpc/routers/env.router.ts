@@ -19,6 +19,7 @@ const envPaginationSchema = createPaginationInputSchema(
 );
 
 const createEnvSchema = z.object({
+	name: z.string().default(""),
 	key: z.string().min(1).max(100),
 	value: z.string().min(1),
 	serviceIds: z.array(z.string().uuid()).optional(),
@@ -26,6 +27,7 @@ const createEnvSchema = z.object({
 
 const updateEnvSchema = z.object({
 	id: z.string().uuid(),
+	name: z.string().optional(),
 	key: z.string().min(1).max(100).optional(),
 	value: z.string().min(1).optional(),
 	serviceIds: z.array(z.string().uuid()).optional(),
@@ -184,6 +186,7 @@ export const envRouter = (router: Router, procedure: Procedure) => {
 
 				const env = await ctx.prisma.env.create({
 					data: {
+						name: input.name ?? "",
 						key: input.key,
 						value: encryptedValue,
 						services: input.serviceIds?.length
@@ -217,6 +220,7 @@ export const envRouter = (router: Router, procedure: Procedure) => {
 
 				// Encrypt value if provided
 				const updateData: Prisma.EnvUpdateInput = {
+					...(data.name !== undefined && { name: data.name }),
 					...(data.key && { key: data.key }),
 					...(data.value && { value: encrypt(data.value) }),
 				};
