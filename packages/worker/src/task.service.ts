@@ -107,23 +107,24 @@ export class TaskService {
 		return response.items.map((ns: { metadata?: { name?: string } }) => ns.metadata?.name ?? '');
 	}
 
-	async createNamespace(coreApi: CoreV1Api, name: string): Promise<V1Namespace> {
+	async createNamespace(coreApi: CoreV1Api, name: string, taskId: string): Promise<V1Namespace> {
 		const k8sName = toK8sName(name, 63);
 
 		// Check if namespace already exists
 		const existingNamespaces = await this.listNamespaces(coreApi);
 		if (existingNamespaces.includes(k8sName)) {
-			console.log(`Namespace ${k8sName} already exists`);
+			await this.appendLog(taskId, `Namespace ${k8sName} already exists, skipping creation`);
 			return await coreApi.readNamespace({ name: k8sName });
 		}
 
 		// Create namespace
+		await this.appendLog(taskId, `Creating namespace ${k8sName}...`);
 		const response = await coreApi.createNamespace({
 			body: {
 				metadata: { name: k8sName },
 			},
 		});
-		console.log(`Namespace ${k8sName} created`);
+		await this.appendLog(taskId, `✓ Namespace ${k8sName} created successfully`);
 		return response;
 	}
 
@@ -147,14 +148,14 @@ export class TaskService {
 		});
 	}
 
-	async createDockerSecret(coreApi: CoreV1Api, namespace: string, secret: DockerSecretData): Promise<V1Secret> {
+	async createDockerSecret(coreApi: CoreV1Api, namespace: string, secret: DockerSecretData, taskId: string): Promise<V1Secret> {
 		const secretName = toK8sName(secret.name);
 		const k8sNamespace = toK8sName(namespace, 63);
 
 		// Check if secret already exists
 		try {
 			const existing = await coreApi.readNamespacedSecret({ name: secretName, namespace: k8sNamespace });
-			console.log(`Docker secret ${secretName} already exists in ${k8sNamespace}`);
+			await this.appendLog(taskId, `Docker secret ${secretName} already exists in ${k8sNamespace}, skipping creation`);
 			return existing;
 		} catch (err: unknown) {
 			// Secret doesn't exist, continue to create it
@@ -166,6 +167,7 @@ export class TaskService {
 		}
 
 		// Create .dockerconfigjson format
+		await this.appendLog(taskId, `Creating Docker secret ${secretName} for registry ${secret.server}...`);
 		const dockerConfigJson = {
 			auths: {
 				[secret.server]: {
@@ -189,11 +191,11 @@ export class TaskService {
 			},
 		});
 
-		console.log(`Docker secret ${secretName} created in ${k8sNamespace}`);
+		await this.appendLog(taskId, `✓ Docker secret ${secretName} created successfully in ${k8sNamespace}`);
 		return response;
 	}
 
-	async createDeployment(appsApi: AppsV1Api, config: DeploymentConfig): Promise<V1Deployment> {
+	async createDeployment(appsApi: AppsV1Api, config: DeploymentConfig, taskId: string): Promise<V1Deployment> {
 		const deploymentName = toK8sName(config.name);
 		const k8sNamespace = toK8sName(config.namespace, 63);
 
@@ -298,12 +300,22 @@ export class TaskService {
 		try {
 			await appsApi.readNamespacedDeployment({ name: deploymentName, namespace: k8sNamespace });
 			// Deployment exists, update it
+			await this.appendLog(taskId, `Deployment ${deploymentName} already exists, updating...`);
+			await this.appendLog(taskId, `  Image: ${config.image}`);
+			await this.appendLog(taskId, `  Replicas: ${config.replicas}`);
+			await this.appendLog(taskId, `  Container Port: ${config.containerPort}`);
+			if (config.livenessProbe) {
+				await this.appendLog(taskId, `  Liveness Probe: ${config.livenessProbe.path}`);
+			}
+			if (config.readinessProbe) {
+				await this.appendLog(taskId, `  Readiness Probe: ${config.readinessProbe.path}`);
+			}
 			const response = await appsApi.replaceNamespacedDeployment({
 				name: deploymentName,
 				namespace: k8sNamespace,
 				body: deployment,
 			});
-			console.log(`Deployment ${deploymentName} updated in ${k8sNamespace}`);
+			await this.appendLog(taskId, `✓ Deployment ${deploymentName} updated successfully in ${k8sNamespace}`);
 			return response;
 		} catch (err: unknown) {
 			const e = err as { code?: number; response?: { statusCode?: number } };
@@ -314,15 +326,31 @@ export class TaskService {
 		}
 
 		// Create new deployment
+		await this.appendLog(taskId, `Creating deployment ${deploymentName}...`);
+		await this.appendLog(taskId, `  Image: ${config.image}`);
+		await this.appendLog(taskId, `  Replicas: ${config.replicas}`);
+		await this.appendLog(taskId, `  Container Port: ${config.containerPort}`);
+		if (config.livenessProbe) {
+			await this.appendLog(taskId, `  Liveness Probe: ${config.livenessProbe.path}`);
+		}
+		if (config.readinessProbe) {
+			await this.appendLog(taskId, `  Readiness Probe: ${config.readinessProbe.path}`);
+		}
+		if (config.env.length > 0) {
+			await this.appendLog(taskId, `  Environment Variables: ${config.env.length}`);
+		}
+		if (config.imagePullSecrets.length > 0) {
+			await this.appendLog(taskId, `  Image Pull Secrets: ${config.imagePullSecrets.length}`);
+		}
 		const response = await appsApi.createNamespacedDeployment({
 			namespace: k8sNamespace,
 			body: deployment,
 		});
-		console.log(`Deployment ${deploymentName} created in ${k8sNamespace}`);
+		await this.appendLog(taskId, `✓ Deployment ${deploymentName} created successfully in ${k8sNamespace}`);
 		return response;
 	}
 
-	async createK8sService(coreApi: CoreV1Api, config: ServiceConfig, deploymentName: string): Promise<V1Service> {
+	async createK8sService(coreApi: CoreV1Api, config: ServiceConfig, deploymentName: string, taskId: string): Promise<V1Service> {
 		const serviceName = toK8sName(config.name);
 		const k8sNamespace = toK8sName(config.namespace, 63);
 
@@ -350,12 +378,13 @@ export class TaskService {
 		try {
 			await coreApi.readNamespacedService({ name: serviceName, namespace: k8sNamespace });
 			// Service exists, update it
+			await this.appendLog(taskId, `Service ${serviceName} already exists, updating...`);
 			const response = await coreApi.replaceNamespacedService({
 				name: serviceName,
 				namespace: k8sNamespace,
 				body: service,
 			});
-			console.log(`Service ${serviceName} updated in ${k8sNamespace}`);
+			await this.appendLog(taskId, `✓ Service ${serviceName} updated successfully in ${k8sNamespace}`);
 			return response;
 		} catch (err: unknown) {
 			const e = err as { code?: number; response?: { statusCode?: number } };
@@ -366,15 +395,16 @@ export class TaskService {
 		}
 
 		// Create new service
+		await this.appendLog(taskId, `Creating Kubernetes service ${serviceName} on port ${config.containerPort}...`);
 		const response = await coreApi.createNamespacedService({
 			namespace: k8sNamespace,
 			body: service,
 		});
-		console.log(`Service ${serviceName} created in ${k8sNamespace}`);
+		await this.appendLog(taskId, `✓ Service ${serviceName} created successfully in ${k8sNamespace}`);
 		return response;
 	}
 
-	async createIngress(networkingApi: NetworkingV1Api, config: IngressConfig): Promise<V1Ingress> {
+	async createIngress(networkingApi: NetworkingV1Api, config: IngressConfig, taskId: string): Promise<V1Ingress> {
 		const ingressName = toK8sName(config.name);
 		const k8sNamespace = toK8sName(config.namespace, 63);
 		const serviceName = toK8sName(config.serviceName);
@@ -413,12 +443,14 @@ export class TaskService {
 		try {
 			await networkingApi.readNamespacedIngress({ name: ingressName, namespace: k8sNamespace });
 			// Ingress exists, update it
+			await this.appendLog(taskId, `Ingress ${ingressName} already exists, updating...`);
+			await this.appendLog(taskId, `  Host: ${config.host}`);
 			const response = await networkingApi.replaceNamespacedIngress({
 				name: ingressName,
 				namespace: k8sNamespace,
 				body: ingress,
 			});
-			console.log(`Ingress ${ingressName} updated in ${k8sNamespace}`);
+			await this.appendLog(taskId, `✓ Ingress ${ingressName} updated successfully in ${k8sNamespace}`);
 			return response;
 		} catch (err: unknown) {
 			const e = err as { code?: number; response?: { statusCode?: number } };
@@ -429,11 +461,12 @@ export class TaskService {
 		}
 
 		// Create new ingress
+		await this.appendLog(taskId, `Creating ingress ${ingressName} for host ${config.host}...`);
 		const response = await networkingApi.createNamespacedIngress({
 			namespace: k8sNamespace,
 			body: ingress,
 		});
-		console.log(`Ingress ${ingressName} created in ${k8sNamespace}`);
+		await this.appendLog(taskId, `✓ Ingress ${ingressName} created successfully in ${k8sNamespace}`);
 		return response;
 	}
 
@@ -448,22 +481,30 @@ export class TaskService {
 		});
 
 		try {
+			await this.appendLog(task.id, `Starting deployment task ${task.id}`);
+			
 			let image: string;
+			let taskType: string;
 
 			if (isDeployTaskMeta(task.meta)) {
 				const deployMeta: DeployTaskMeta = task.meta;
 				image = deployMeta.image;
+				taskType = 'deploy';
+				await this.appendLog(task.id, `Task type: Deploy`);
+				await this.appendLog(task.id, `Image: ${image}`);
 			} else if (isServiceUpdateTaskMeta(task.meta)) {
 				const updateMeta: ServiceUpdateTaskMeta = task.meta;
 				image = updateMeta.image;
+				taskType = 'service-update';
+				await this.appendLog(task.id, `Task type: Service Update`);
+				await this.appendLog(task.id, `Image: ${image}`);
 			} else {
 				await this.failTask(task.id, `Unknown task meta type for task ${task.id}`);
 				return;
 			}
 
-			console.log(`Processing task ${task.id} with image ${image}`);
-
 			// Get service with application (including cluster), docker secrets, and env variables
+			await this.appendLog(task.id, `Loading service configuration...`);
 			const service = await this.prisma.service.findUnique({
 				where: { id: task.serviceId },
 				include: {
@@ -490,32 +531,46 @@ export class TaskService {
 				return;
 			}
 
+			await this.appendLog(task.id, `Service: ${service.name}`);
+			await this.appendLog(task.id, `Application: ${service.application.name}`);
+			await this.appendLog(task.id, `Namespace: ${service.application.namespace}`);
+
 			if (!service.application.cluster) {
 				await this.failTask(task.id, `Cluster not found for application ${service.application.id}`);
 				return;
 			}
 
+			await this.appendLog(task.id, `Cluster: ${service.application.cluster.name}`);
+
 			// Load kubeconfig from database for the cluster
+			await this.appendLog(task.id, `Loading Kubernetes configuration...`);
 			const { coreApi, appsApi, networkingApi } = await this.loadKubeConfig(service.application.cluster.id);
+			await this.appendLog(task.id, `✓ Kubernetes configuration loaded`);
 
 			const namespace = service.application.namespace;
 
 			// Create namespace for the task's application
-			await this.createNamespace(coreApi, namespace);
+			await this.createNamespace(coreApi, namespace, task.id);
 
 			// Create docker secrets
 			const imagePullSecrets: string[] = [];
-			for (const { dockerSecret } of service.dockerSecrets) {
-				await this.createDockerSecret(coreApi, namespace, {
-					name: dockerSecret.name,
-					server: dockerSecret.server,
-					username: dockerSecret.username,
-					password: decrypt(dockerSecret.password),
-				});
-				imagePullSecrets.push(dockerSecret.name);
+			if (service.dockerSecrets.length > 0) {
+				await this.appendLog(task.id, `Processing ${service.dockerSecrets.length} Docker secret(s)...`);
+				for (const { dockerSecret } of service.dockerSecrets) {
+					await this.createDockerSecret(coreApi, namespace, {
+						name: dockerSecret.name,
+						server: dockerSecret.server,
+						username: dockerSecret.username,
+						password: decrypt(dockerSecret.password),
+					}, task.id);
+					imagePullSecrets.push(dockerSecret.name);
+				}
+			} else {
+				await this.appendLog(task.id, `No Docker secrets configured`);
 			}
 
 			// Load and decrypt environment variables
+			await this.appendLog(task.id, `Processing ${service.envs.length} environment variable(s)...`);
 			const envVars: Array<{ name: string; value: string }> = [];
 			for (const { env } of service.envs) {
 				try {
@@ -524,16 +579,17 @@ export class TaskService {
 						name: env.key,
 						value: decryptedValue,
 					});
+					await this.appendLog(task.id, `  ✓ ${env.key}`);
 				} catch (error) {
 					await this.appendLog(
 						task.id,
-						`Warning: Failed to decrypt env variable ${env.key}: ${error instanceof Error ? error.message : String(error)}`,
+						`  ✗ Warning: Failed to decrypt env variable ${env.key}: ${error instanceof Error ? error.message : String(error)}`,
 					);
-					console.error(`Failed to decrypt env variable ${env.key}:`, error);
 				}
 			}
 
 			// Create or update deployment
+			await this.appendLog(task.id, `Creating/updating deployment...`);
 			const deploymentName = toK8sName(service.name);
 			await this.createDeployment(appsApi, {
 				name: service.name,
@@ -569,9 +625,10 @@ export class TaskService {
 							failureThreshold: service.readinessProbeFailureThreshold,
 						}
 					: null,
-			});
+			}, task.id);
 
 			// Create Kubernetes Service (using the same deployment name for selector)
+			await this.appendLog(task.id, `Creating Kubernetes service...`);
 			await this.createK8sService(
 				coreApi,
 				{
@@ -580,11 +637,13 @@ export class TaskService {
 					containerPort: service.containerPort,
 				},
 				deploymentName,
+				task.id,
 			);
 
 			// Create Ingress if ingressUrl is defined
 			if (service.ingressUrl) {
 				try {
+					await this.appendLog(task.id, `Creating ingress...`);
 					const url = new URL(service.ingressUrl);
 					const k8sServiceName = toK8sName(service.name);
 					await this.createIngress(networkingApi, {
@@ -593,17 +652,19 @@ export class TaskService {
 						host: url.hostname,
 						serviceName: k8sServiceName,
 						servicePort: service.containerPort,
-					});
+					}, task.id);
 				} catch (err) {
 					await this.appendLog(
 						task.id,
-						`Warning: Failed to create ingress - invalid URL: ${service.ingressUrl}`,
+						`✗ Warning: Failed to create ingress - invalid URL: ${service.ingressUrl}`,
 					);
-					console.error(`Failed to create ingress for service ${service.name}:`, err);
 				}
+			} else {
+				await this.appendLog(task.id, `No ingress URL configured, skipping ingress creation`);
 			}
 
 			// Mark task as done
+			await this.appendLog(task.id, `✓ Deployment completed successfully`);
 			await this.prisma.task.update({
 				where: { id: task.id },
 				data: {
@@ -613,6 +674,11 @@ export class TaskService {
 			});
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error);
+			const errorStack = error instanceof Error ? error.stack : undefined;
+			await this.appendLog(task.id, `✗ Deployment failed: ${errorMessage}`);
+			if (errorStack) {
+				await this.appendLog(task.id, `Stack trace: ${errorStack}`);
+			}
 			await this.failTask(task.id, `Deployment failed: ${errorMessage}`);
 			throw error;
 		}
