@@ -54,6 +54,22 @@ model Service {
   cpuLimit    Int?
   memoryLimit Int?
 
+  // Liveness probe settings
+  livenessProbePath                String?
+  livenessProbeInitialDelaySeconds Int?
+  livenessProbePeriodSeconds       Int?
+  livenessProbeTimeoutSeconds      Int?
+  livenessProbeSuccessThreshold    Int?
+  livenessProbeFailureThreshold    Int?
+
+  // Readiness probe settings
+  readinessProbePath                String?
+  readinessProbeInitialDelaySeconds Int?
+  readinessProbePeriodSeconds       Int?
+  readinessProbeTimeoutSeconds      Int?
+  readinessProbeSuccessThreshold    Int?
+  readinessProbeFailureThreshold    Int?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

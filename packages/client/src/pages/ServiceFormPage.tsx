@@ -16,6 +16,18 @@ interface ServiceFormValues {
 	cpuLimit?: number | null;
 	memoryRequest?: number | null;
 	memoryLimit?: number | null;
+	livenessProbePath?: string | null;
+	livenessProbeInitialDelaySeconds?: number | null;
+	livenessProbePeriodSeconds?: number | null;
+	livenessProbeTimeoutSeconds?: number | null;
+	livenessProbeSuccessThreshold?: number | null;
+	livenessProbeFailureThreshold?: number | null;
+	readinessProbePath?: string | null;
+	readinessProbeInitialDelaySeconds?: number | null;
+	readinessProbePeriodSeconds?: number | null;
+	readinessProbeTimeoutSeconds?: number | null;
+	readinessProbeSuccessThreshold?: number | null;
+	readinessProbeFailureThreshold?: number | null;
 }
 
 interface EnvData {
@@ -87,6 +99,18 @@ export const ServiceFormPage = () => {
 				cpuLimit: service.cpuLimit,
 				memoryRequest: service.memoryRequest,
 				memoryLimit: service.memoryLimit,
+				livenessProbePath: service.livenessProbePath,
+				livenessProbeInitialDelaySeconds: service.livenessProbeInitialDelaySeconds,
+				livenessProbePeriodSeconds: service.livenessProbePeriodSeconds,
+				livenessProbeTimeoutSeconds: service.livenessProbeTimeoutSeconds,
+				livenessProbeSuccessThreshold: service.livenessProbeSuccessThreshold,
+				livenessProbeFailureThreshold: service.livenessProbeFailureThreshold,
+				readinessProbePath: service.readinessProbePath,
+				readinessProbeInitialDelaySeconds: service.readinessProbeInitialDelaySeconds,
+				readinessProbePeriodSeconds: service.readinessProbePeriodSeconds,
+				readinessProbeTimeoutSeconds: service.readinessProbeTimeoutSeconds,
+				readinessProbeSuccessThreshold: service.readinessProbeSuccessThreshold,
+				readinessProbeFailureThreshold: service.readinessProbeFailureThreshold,
 			});
 		}
 	}, [service, form]);
@@ -230,6 +254,56 @@ export const ServiceFormPage = () => {
 								<InputNumber min={0} style={{ width: '100%' }} placeholder="512" />
 							</Form.Item>
 						</div>
+
+						<Divider>Health Probes</Divider>
+
+						<Space direction="vertical" size="middle" style={{ width: '100%' }}>
+							<Card size="small" title="Liveness Probe">
+								<Form.Item label="Path" name="livenessProbePath">
+									<Input placeholder="/health" />
+								</Form.Item>
+								<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+									<Form.Item label="Initial Delay (s)" name="livenessProbeInitialDelaySeconds">
+										<InputNumber min={0} style={{ width: '100%' }} placeholder="30" />
+									</Form.Item>
+									<Form.Item label="Period (s)" name="livenessProbePeriodSeconds">
+										<InputNumber min={1} style={{ width: '100%' }} placeholder="10" />
+									</Form.Item>
+									<Form.Item label="Timeout (s)" name="livenessProbeTimeoutSeconds">
+										<InputNumber min={1} style={{ width: '100%' }} placeholder="5" />
+									</Form.Item>
+									<Form.Item label="Success Threshold" name="livenessProbeSuccessThreshold">
+										<InputNumber min={1} style={{ width: '100%' }} placeholder="1" />
+									</Form.Item>
+									<Form.Item label="Failure Threshold" name="livenessProbeFailureThreshold">
+										<InputNumber min={1} style={{ width: '100%' }} placeholder="3" />
+									</Form.Item>
+								</div>
+							</Card>
+
+							<Card size="small" title="Readiness Probe">
+								<Form.Item label="Path" name="readinessProbePath">
+									<Input placeholder="/ready" />
+								</Form.Item>
+								<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+									<Form.Item label="Initial Delay (s)" name="readinessProbeInitialDelaySeconds">
+										<InputNumber min={0} style={{ width: '100%' }} placeholder="5" />
+									</Form.Item>
+									<Form.Item label="Period (s)" name="readinessProbePeriodSeconds">
+										<InputNumber min={1} style={{ width: '100%' }} placeholder="10" />
+									</Form.Item>
+									<Form.Item label="Timeout (s)" name="readinessProbeTimeoutSeconds">
+										<InputNumber min={1} style={{ width: '100%' }} placeholder="5" />
+									</Form.Item>
+									<Form.Item label="Success Threshold" name="readinessProbeSuccessThreshold">
+										<InputNumber min={1} style={{ width: '100%' }} placeholder="1" />
+									</Form.Item>
+									<Form.Item label="Failure Threshold" name="readinessProbeFailureThreshold">
+										<InputNumber min={1} style={{ width: '100%' }} placeholder="3" />
+									</Form.Item>
+								</div>
+							</Card>
+						</Space>
 
 						<Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
 							<Space>

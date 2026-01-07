@@ -40,6 +40,22 @@ interface DeploymentConfig {
 		memoryRequest?: number | null;
 		memoryLimit?: number | null;
 	};
+	livenessProbe?: {
+		path: string;
+		initialDelaySeconds?: number | null;
+		periodSeconds?: number | null;
+		timeoutSeconds?: number | null;
+		successThreshold?: number | null;
+		failureThreshold?: number | null;
+	} | null;
+	readinessProbe?: {
+		path: string;
+		initialDelaySeconds?: number | null;
+		periodSeconds?: number | null;
+		timeoutSeconds?: number | null;
+		successThreshold?: number | null;
+		failureThreshold?: number | null;
+	} | null;
 }
 
 interface ServiceConfig {
@@ -204,6 +220,36 @@ export class TaskService {
 			}
 		}
 
+		// Build liveness probe
+		const livenessProbe = config.livenessProbe?.path
+			? {
+					httpGet: {
+						path: config.livenessProbe.path,
+						port: config.containerPort,
+					},
+					initialDelaySeconds: config.livenessProbe.initialDelaySeconds ?? 30,
+					periodSeconds: config.livenessProbe.periodSeconds ?? 10,
+					timeoutSeconds: config.livenessProbe.timeoutSeconds ?? 5,
+					successThreshold: config.livenessProbe.successThreshold ?? 1,
+					failureThreshold: config.livenessProbe.failureThreshold ?? 3,
+				}
+			: undefined;
+
+		// Build readiness probe
+		const readinessProbe = config.readinessProbe?.path
+			? {
+					httpGet: {
+						path: config.readinessProbe.path,
+						port: config.containerPort,
+					},
+					initialDelaySeconds: config.readinessProbe.initialDelaySeconds ?? 5,
+					periodSeconds: config.readinessProbe.periodSeconds ?? 10,
+					timeoutSeconds: config.readinessProbe.timeoutSeconds ?? 5,
+					successThreshold: config.readinessProbe.successThreshold ?? 1,
+					failureThreshold: config.readinessProbe.failureThreshold ?? 3,
+				}
+			: undefined;
+
 		const deployment: V1Deployment = {
 			metadata: {
 				name: deploymentName,
@@ -235,6 +281,8 @@ export class TaskService {
 								],
 								env: config.env.length > 0 ? config.env : undefined,
 								resources: Object.keys(resources).length > 0 ? resources : undefined,
+								livenessProbe,
+								readinessProbe,
 							},
 						],
 						imagePullSecrets:
@@ -501,6 +549,26 @@ export class TaskService {
 					memoryRequest: service.memoryRequest,
 					memoryLimit: service.memoryLimit,
 				},
+				livenessProbe: service.livenessProbePath
+					? {
+							path: service.livenessProbePath,
+							initialDelaySeconds: service.livenessProbeInitialDelaySeconds,
+							periodSeconds: service.livenessProbePeriodSeconds,
+							timeoutSeconds: service.livenessProbeTimeoutSeconds,
+							successThreshold: service.livenessProbeSuccessThreshold,
+							failureThreshold: service.livenessProbeFailureThreshold,
+						}
+					: null,
+				readinessProbe: service.readinessProbePath
+					? {
+							path: service.readinessProbePath,
+							initialDelaySeconds: service.readinessProbeInitialDelaySeconds,
+							periodSeconds: service.readinessProbePeriodSeconds,
+							timeoutSeconds: service.readinessProbeTimeoutSeconds,
+							successThreshold: service.readinessProbeSuccessThreshold,
+							failureThreshold: service.readinessProbeFailureThreshold,
+						}
+					: null,
 			});
 
 			// Create Kubernetes Service (using the same deployment name for selector)

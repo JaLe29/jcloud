@@ -27,6 +27,18 @@ const createServiceSchema = z.object({
 	cpuLimit: z.number().int().min(0).optional().nullable(),
 	memoryRequest: z.number().int().min(0).optional().nullable(),
 	memoryLimit: z.number().int().min(0).optional().nullable(),
+	livenessProbePath: z.string().optional().nullable(),
+	livenessProbeInitialDelaySeconds: z.number().int().min(0).optional().nullable(),
+	livenessProbePeriodSeconds: z.number().int().min(1).optional().nullable(),
+	livenessProbeTimeoutSeconds: z.number().int().min(1).optional().nullable(),
+	livenessProbeSuccessThreshold: z.number().int().min(1).optional().nullable(),
+	livenessProbeFailureThreshold: z.number().int().min(1).optional().nullable(),
+	readinessProbePath: z.string().optional().nullable(),
+	readinessProbeInitialDelaySeconds: z.number().int().min(0).optional().nullable(),
+	readinessProbePeriodSeconds: z.number().int().min(1).optional().nullable(),
+	readinessProbeTimeoutSeconds: z.number().int().min(1).optional().nullable(),
+	readinessProbeSuccessThreshold: z.number().int().min(1).optional().nullable(),
+	readinessProbeFailureThreshold: z.number().int().min(1).optional().nullable(),
 });
 
 const updateServiceSchema = z.object({
@@ -39,6 +51,18 @@ const updateServiceSchema = z.object({
 	cpuLimit: z.number().int().min(0).optional().nullable(),
 	memoryRequest: z.number().int().min(0).optional().nullable(),
 	memoryLimit: z.number().int().min(0).optional().nullable(),
+	livenessProbePath: z.string().optional().nullable(),
+	livenessProbeInitialDelaySeconds: z.number().int().min(0).optional().nullable(),
+	livenessProbePeriodSeconds: z.number().int().min(1).optional().nullable(),
+	livenessProbeTimeoutSeconds: z.number().int().min(1).optional().nullable(),
+	livenessProbeSuccessThreshold: z.number().int().min(1).optional().nullable(),
+	livenessProbeFailureThreshold: z.number().int().min(1).optional().nullable(),
+	readinessProbePath: z.string().optional().nullable(),
+	readinessProbeInitialDelaySeconds: z.number().int().min(0).optional().nullable(),
+	readinessProbePeriodSeconds: z.number().int().min(1).optional().nullable(),
+	readinessProbeTimeoutSeconds: z.number().int().min(1).optional().nullable(),
+	readinessProbeSuccessThreshold: z.number().int().min(1).optional().nullable(),
+	readinessProbeFailureThreshold: z.number().int().min(1).optional().nullable(),
 });
 
 export const serviceRouter = (router: Router, procedure: Procedure) => {
