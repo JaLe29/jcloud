@@ -7,6 +7,7 @@ import { apikeyRouter } from './routers/apikey.router';
 import { dockerSecretRouter } from './routers/dockersecret.router';
 import { taskRouter } from './routers/task.router';
 import { clusterRouter } from './routers/cluster.router';
+import { deploymentRouter } from './routers/deployment.router';
 import type { Context } from './context';
 
 export const t = initTRPC.context<Context>().create({ transformer: superjson });
@@ -19,6 +20,7 @@ export const appRouter = t.router({
 	dockerSecret: dockerSecretRouter(t.router, t.procedure),
 	task: taskRouter(t.router, t.procedure),
 	cluster: clusterRouter(t.router, t.procedure),
+	deployment: deploymentRouter(t.router, t.procedure),
 });
 
 export type AppRouter = typeof appRouter;
