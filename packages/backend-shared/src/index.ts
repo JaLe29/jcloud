@@ -1,4 +1,11 @@
 export { decrypt, encrypt } from './encryption';
+export { toK8sName } from './k8s';
+export {
+	type KubernetesApiClients,
+	KubernetesService,
+	type PodInfo,
+	type ServiceStatus,
+} from './kubernetes';
 export {
 	createDeployTaskMeta,
 	createServiceUpdateTaskMeta,

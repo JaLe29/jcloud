@@ -7,6 +7,7 @@ import { clusterRouter } from './routers/cluster.router';
 import { deploymentRouter } from './routers/deployment.router';
 import { dockerSecretRouter } from './routers/dockersecret.router';
 import { envRouter } from './routers/env.router';
+import { kubernetesRouter } from './routers/kubernetes.router';
 import { serviceRouter } from './routers/service.router';
 import { taskRouter } from './routers/task.router';
 
@@ -21,6 +22,7 @@ export const appRouter = t.router({
 	task: taskRouter(t.router, t.procedure),
 	cluster: clusterRouter(t.router, t.procedure),
 	deployment: deploymentRouter(t.router, t.procedure),
+	kubernetes: kubernetesRouter(t.router, t.procedure),
 });
 
 export type AppRouter = typeof appRouter;

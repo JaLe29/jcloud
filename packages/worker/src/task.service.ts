@@ -3,21 +3,21 @@ import {
 	decrypt,
 	isDeployTaskMeta,
 	isServiceUpdateTaskMeta,
+	KubernetesService,
 	type ServiceUpdateTaskMeta,
+	toK8sName,
 } from '@jcloud/backend-shared';
-import {
+import type {
 	AppsV1Api,
 	CoreV1Api,
-	KubeConfig,
 	NetworkingV1Api,
-	type V1Deployment,
-	type V1Ingress,
-	type V1Namespace,
-	type V1Secret,
-	type V1Service,
+	V1Deployment,
+	V1Ingress,
+	V1Namespace,
+	V1Secret,
+	V1Service,
 } from '@kubernetes/client-node';
 import type { PrismaClient, Task } from '@prisma/client';
-import { toK8sName } from './utils/k8s';
 
 interface DockerSecretData {
 	name: string;
@@ -75,33 +75,10 @@ interface IngressConfig {
 }
 
 export class TaskService {
-	constructor(private readonly prisma: PrismaClient) {}
+	private readonly k8sService: KubernetesService;
 
-	private async loadKubeConfig(
-		clusterId: string,
-	): Promise<{ coreApi: CoreV1Api; appsApi: AppsV1Api; networkingApi: NetworkingV1Api }> {
-		// Load cluster from database
-		const cluster = await this.prisma.cluster.findUnique({
-			where: { id: clusterId },
-		});
-
-		if (!cluster) {
-			throw new Error(`Cluster ${clusterId} not found`);
-		}
-
-		// Decrypt kubeconfig
-		const kubeconfig = decrypt(cluster.kubeconfig);
-
-		// Load kubeconfig
-		const kc = new KubeConfig();
-		kc.loadFromString(kubeconfig);
-
-		// Create API clients
-		const coreApi = kc.makeApiClient(CoreV1Api);
-		const appsApi = kc.makeApiClient(AppsV1Api);
-		const networkingApi = kc.makeApiClient(NetworkingV1Api);
-
-		return { coreApi, appsApi, networkingApi };
+	constructor(private readonly prisma: PrismaClient) {
+		this.k8sService = new KubernetesService(prisma);
 	}
 
 	async listNamespaces(coreApi: CoreV1Api): Promise<string[]> {
@@ -586,7 +563,9 @@ export class TaskService {
 
 			// Load kubeconfig from database for the cluster
 			await this.appendLog(task.id, 'Loading Kubernetes configuration...');
-			const { coreApi, appsApi, networkingApi } = await this.loadKubeConfig(service.application.cluster.id);
+			const { coreApi, appsApi, networkingApi } = await this.k8sService.loadKubeConfig(
+				service.application.cluster.id,
+			);
 			await this.appendLog(task.id, '✓ Kubernetes configuration loaded');
 
 			const namespace = service.application.namespace;

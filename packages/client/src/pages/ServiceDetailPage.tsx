@@ -6,6 +6,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ApiDeployHistory } from '../components/features/ApiDeployHistory';
 import { ServiceApiKey } from '../components/features/ServiceApiKey';
 import { ServiceDockerSecrets } from '../components/features/ServiceDockerSecrets';
+import { ServicePods } from '../components/features/ServicePods';
 import { ServiceTasks } from '../components/features/ServiceTasks';
 import { trpc } from '../utils/trpc';
 
@@ -177,6 +178,8 @@ export const ServiceDetailPage = () => {
 					</Descriptions.Item>
 				</Descriptions>
 			</Card>
+
+			<ServicePods serviceId={service.id} />
 
 			<Card title="API Key">
 				<ServiceApiKey serviceId={service.id} />
