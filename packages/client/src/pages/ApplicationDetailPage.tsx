@@ -10,6 +10,7 @@ import { Button, Card, Descriptions, Modal, message, Space, Table, Tag, Tooltip,
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useNavigate, useParams } from 'react-router-dom';
+import { ApplicationPods } from '../components/features/ApplicationPods';
 import { trpc } from '../utils/trpc';
 
 const { Title, Text } = Typography;
@@ -315,6 +316,8 @@ export const ApplicationDetailPage = () => {
 					</Descriptions.Item>
 				</Descriptions>
 			</Card>
+
+			{application.services.length > 0 && <ApplicationPods serviceIds={application.services.map(s => s.id)} />}
 
 			<Card
 				title={`Services (${application.services.length})`}
