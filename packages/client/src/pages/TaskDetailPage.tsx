@@ -1,7 +1,13 @@
-import { useNavigate, useParams } from 'react-router-dom';
-import { Card, Typography, Space, Button, Tag, Descriptions } from 'antd';
-import { ArrowLeftOutlined, ClockCircleOutlined, SyncOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import {
+	ArrowLeftOutlined,
+	CheckCircleOutlined,
+	ClockCircleOutlined,
+	CloseCircleOutlined,
+	SyncOutlined,
+} from '@ant-design/icons';
+import { Button, Card, Descriptions, Space, Tag, Typography } from 'antd';
 import dayjs from 'dayjs';
+import { useNavigate, useParams } from 'react-router-dom';
 import { trpc } from '../utils/trpc';
 
 const { Title, Text } = Typography;
@@ -19,20 +25,27 @@ export const TaskDetailPage = () => {
 	const { taskId } = useParams<{ taskId: string }>();
 	const navigate = useNavigate();
 
-	const { data: task, isLoading, error } = trpc.task.getById.useQuery(
-		{ id: taskId! },
-		{ enabled: !!taskId, retry: false },
-	);
+	const {
+		data: task,
+		isLoading,
+		error,
+	} = trpc.task.getById.useQuery({ id: taskId! }, { enabled: !!taskId, retry: false });
 
 	const getTaskType = (meta: Record<string, unknown> | null): string => {
-		if (!meta) return 'Unknown';
+		if (!meta) {
+			return 'Unknown';
+		}
 		const type = meta.type as string | undefined;
-		if (type === 'deploy-created') return 'Deployment';
+		if (type === 'deploy-created') {
+			return 'Deployment';
+		}
 		return type || 'Unknown';
 	};
 
 	const getDuration = (): string => {
-		if (!task?.startedAt) return '-';
+		if (!task?.startedAt) {
+			return '-';
+		}
 		const end = task.finishedAt ? dayjs(task.finishedAt) : dayjs();
 		const duration = end.diff(dayjs(task.startedAt), 'second');
 		return `${duration}s`;
@@ -66,16 +79,23 @@ export const TaskDetailPage = () => {
 
 	return (
 		<Space direction="vertical" size="large" style={{ width: '100%' }}>
-			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+			<div
+				style={{
+					display: 'flex',
+					justifyContent: 'space-between',
+					alignItems: 'center',
+					flexWrap: 'wrap',
+					gap: 16,
+				}}
+			>
 				<Space>
 					<Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/tasks')}>
 						Back
 					</Button>
-					<Title level={2} style={{ margin: 0 }}>Task Detail</Title>
-					<Tag
-						color={statusConfig[task.status].color}
-						icon={statusConfig[task.status].icon}
-					>
+					<Title level={2} style={{ margin: 0 }}>
+						Task Detail
+					</Title>
+					<Tag color={statusConfig[task.status].color} icon={statusConfig[task.status].icon}>
 						{statusConfig[task.status].label}
 					</Tag>
 				</Space>
@@ -84,10 +104,7 @@ export const TaskDetailPage = () => {
 			<Card title="Task Info">
 				<Descriptions column={{ xs: 1, sm: 2, md: 2, lg: 3 }} bordered>
 					<Descriptions.Item label="Status">
-						<Tag
-							color={statusConfig[task.status].color}
-							icon={statusConfig[task.status].icon}
-						>
+						<Tag color={statusConfig[task.status].color} icon={statusConfig[task.status].icon}>
 							{statusConfig[task.status].label}
 						</Tag>
 					</Descriptions.Item>
@@ -155,4 +172,3 @@ export const TaskDetailPage = () => {
 		</Space>
 	);
 };
-

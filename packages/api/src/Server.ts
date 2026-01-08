@@ -1,10 +1,10 @@
 import cors from '@fastify/cors';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '@prisma/client';
 import type { FastifyInstance } from 'fastify';
 import Fastify from 'fastify';
-import { PrismaClient } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
-import { registerSystemRoutes } from './routes/system.route';
 import { registerDeployRoute } from './routes/deploy.route';
+import { registerSystemRoutes } from './routes/system.route';
 
 interface ServerOptions {
 	port: number;

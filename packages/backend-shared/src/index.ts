@@ -1,13 +1,13 @@
-export { encrypt, decrypt } from './encryption';
+export { decrypt, encrypt } from './encryption';
 export {
-	TASK_TYPE,
-	type TaskType,
-	type DeployTaskMeta,
-	type ServiceUpdateTaskMeta,
-	type TaskMeta,
 	createDeployTaskMeta,
 	createServiceUpdateTaskMeta,
+	type DeployTaskMeta,
 	getTaskTypeLabel,
 	isDeployTaskMeta,
 	isServiceUpdateTaskMeta,
+	type ServiceUpdateTaskMeta,
+	TASK_TYPE,
+	type TaskMeta,
+	type TaskType,
 } from './task';

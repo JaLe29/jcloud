@@ -1,12 +1,12 @@
-import { Table, Typography, Space, Alert, Card, Input, Button, Tag } from 'antd';
-import { SearchOutlined, PlusOutlined } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
+import { Alert, Button, Card, Input, Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useServerTable } from '../hooks/useServerTable';
-import { trpc } from '../utils/trpc';
 import { useClusterStore } from '../stores/clusterStore';
+import { trpc } from '../utils/trpc';
 
 const { Title, Text } = Typography;
 
@@ -83,17 +83,14 @@ export const ApplicationsPage = () => {
 		{
 			title: 'Cluster',
 			key: 'cluster',
-			render: (_, record) => (
-				record.cluster ? <Tag color="blue">{record.cluster.name}</Tag> : <Text type="secondary">-</Text>
-			),
+			render: (_, record) =>
+				record.cluster ? <Tag color="blue">{record.cluster.name}</Tag> : <Text type="secondary">-</Text>,
 		},
 		{
 			title: 'Services',
 			key: 'servicesCount',
 			render: (_, record) => (
-				<Text type={record._count.services > 0 ? undefined : 'secondary'}>
-					{record._count.services}
-				</Text>
+				<Text type={record._count.services > 0 ? undefined : 'secondary'}>{record._count.services}</Text>
 			),
 			width: 100,
 			align: 'center',
@@ -105,9 +102,7 @@ export const ApplicationsPage = () => {
 			title: 'Created',
 			dataIndex: 'createdAt',
 			key: 'createdAt',
-			render: (date: Date) => (
-				<Text type="secondary">{dayjs(date).format('DD.MM.YYYY HH:mm')}</Text>
-			),
+			render: (date: Date) => <Text type="secondary">{dayjs(date).format('DD.MM.YYYY HH:mm')}</Text>,
 			sorter: true,
 			sortOrder: table.getSortOrder('createdAt'),
 			sortDirections: ['descend', 'ascend'],
@@ -121,9 +116,19 @@ export const ApplicationsPage = () => {
 	if (!selectedClusterId) {
 		return (
 			<Space direction="vertical" size="large" style={{ width: '100%' }}>
-				<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+				<div
+					style={{
+						display: 'flex',
+						justifyContent: 'space-between',
+						alignItems: 'flex-start',
+						flexWrap: 'wrap',
+						gap: 16,
+					}}
+				>
 					<div>
-						<Title level={2} style={{ marginBottom: 4 }}>Applications</Title>
+						<Title level={2} style={{ marginBottom: 4 }}>
+							Applications
+						</Title>
 					</div>
 				</div>
 				<Card>
@@ -140,9 +145,19 @@ export const ApplicationsPage = () => {
 
 	return (
 		<Space direction="vertical" size="large" style={{ width: '100%' }}>
-			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+			<div
+				style={{
+					display: 'flex',
+					justifyContent: 'space-between',
+					alignItems: 'flex-start',
+					flexWrap: 'wrap',
+					gap: 16,
+				}}
+			>
 				<div>
-					<Title level={2} style={{ marginBottom: 4 }}>Applications</Title>
+					<Title level={2} style={{ marginBottom: 4 }}>
+						Applications
+					</Title>
 					{data?.pagination && (
 						<Text type="secondary">
 							{data.pagination.total} application{data.pagination.total !== 1 ? 's' : ''}
@@ -156,7 +171,7 @@ export const ApplicationsPage = () => {
 						prefix={<SearchOutlined style={{ opacity: 0.5 }} />}
 						allowClear
 						value={searchValue}
-						onChange={(e) => setSearchValue(e.target.value)}
+						onChange={e => setSearchValue(e.target.value)}
 						style={{ width: 200 }}
 					/>
 					<Button
@@ -176,7 +191,7 @@ export const ApplicationsPage = () => {
 					dataSource={data?.applications || []}
 					loading={isLoading}
 					rowKey="id"
-					onRow={(record) => ({
+					onRow={record => ({
 						onClick: () => navigate(`/applications/${record.id}`),
 						style: { cursor: 'pointer' },
 					})}
@@ -186,7 +201,7 @@ export const ApplicationsPage = () => {
 						current: table.page,
 						pageSize: table.pageSize,
 						showSizeChanger: true,
-						showTotal: (total) => `${total} items`,
+						showTotal: total => `${total} items`,
 					}}
 				/>
 			</Card>

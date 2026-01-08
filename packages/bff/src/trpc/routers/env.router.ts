@@ -1,9 +1,9 @@
-import { TRPCError } from '@trpc/server';
+import { decrypt, encrypt } from '@jcloud/backend-shared';
 import type { Prisma } from '@prisma/client';
+import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
+import { createPaginationInputSchema, getPaginationMeta, getPaginationParams } from '../../utils/pagination';
 import type { Procedure, Router } from '../router';
-import { getPaginationMeta, getPaginationParams, createPaginationInputSchema } from '../../utils/pagination';
-import { encrypt, decrypt } from '@jcloud/backend-shared';
 
 const envFilterSchema = z
 	.object({
@@ -13,13 +13,10 @@ const envFilterSchema = z
 	})
 	.optional();
 
-const envPaginationSchema = createPaginationInputSchema(
-	['createdAt', 'updatedAt', 'key'] as const,
-	envFilterSchema,
-);
+const envPaginationSchema = createPaginationInputSchema(['createdAt', 'updatedAt', 'key'] as const, envFilterSchema);
 
 const createEnvSchema = z.object({
-	name: z.string().default(""),
+	name: z.string().default(''),
 	key: z.string().min(1).max(100),
 	value: z.string().min(1),
 	serviceIds: z.array(z.string().uuid()).optional(),
@@ -35,241 +32,229 @@ const updateEnvSchema = z.object({
 
 export const envRouter = (router: Router, procedure: Procedure) => {
 	return router({
-		list: procedure
-			.input(envPaginationSchema)
-			.query(async ({ ctx, input }) => {
-				const { page, limit, skip, take } = getPaginationParams(input);
+		list: procedure.input(envPaginationSchema).query(async ({ ctx, input }) => {
+			const { page, limit, skip, take } = getPaginationParams(input);
 
-				const sortBy = input?.sortBy || 'key';
-				const sortOrder = input?.sortOrder || 'asc';
+			const sortBy = input?.sortBy || 'key';
+			const sortOrder = input?.sortOrder || 'asc';
 
-				const where: Prisma.EnvWhereInput = {};
+			const where: Prisma.EnvWhereInput = {};
 
-				if (input?.filter?.key) {
-					where.key = {
-						contains: input.filter.key,
-						mode: 'insensitive',
-					};
-				}
+			if (input?.filter?.key) {
+				where.key = {
+					contains: input.filter.key,
+					mode: 'insensitive',
+				};
+			}
 
-				// Filter by serviceId - envs that are assigned to this service
-				if (input?.filter?.serviceId) {
-					where.services = {
-						some: {
-							serviceId: input.filter.serviceId,
+			// Filter by serviceId - envs that are assigned to this service
+			if (input?.filter?.serviceId) {
+				where.services = {
+					some: {
+						serviceId: input.filter.serviceId,
+					},
+				};
+			}
+
+			// Filter by applicationId - envs that are assigned to any service of this application
+			if (input?.filter?.applicationId) {
+				where.services = {
+					some: {
+						service: {
+							applicationId: input.filter.applicationId,
 						},
-					};
-				}
+					},
+				};
+			}
 
-				// Filter by applicationId - envs that are assigned to any service of this application
-				if (input?.filter?.applicationId) {
-					where.services = {
-						some: {
+			const total = await ctx.prisma.env.count({ where });
+
+			const orderBy: Prisma.EnvOrderByWithRelationInput = {
+				[sortBy]: sortOrder,
+			};
+
+			const envs = await ctx.prisma.env.findMany({
+				where,
+				skip,
+				take,
+				orderBy,
+				include: {
+					services: {
+						include: {
 							service: {
-								applicationId: input.filter.applicationId,
-							},
-						},
-					};
-				}
-
-				const total = await ctx.prisma.env.count({ where });
-
-				const orderBy: Prisma.EnvOrderByWithRelationInput = {
-					[sortBy]: sortOrder,
-				};
-
-				const envs = await ctx.prisma.env.findMany({
-					where,
-					skip,
-					take,
-					orderBy,
-					include: {
-						services: {
-							include: {
-								service: {
-									select: {
-										id: true,
-										name: true,
-										application: {
-											select: {
-												id: true,
-												name: true,
-											},
+								select: {
+									id: true,
+									name: true,
+									application: {
+										select: {
+											id: true,
+											name: true,
 										},
 									},
 								},
 							},
 						},
 					},
+				},
+			});
+
+			// Don't decrypt values in list view, just mask them
+			const envsWithMaskedValues = envs.map(env => ({
+				...env,
+				value: '••••••••',
+				services: env.services.map(s => s.service),
+			}));
+
+			return {
+				envs: envsWithMaskedValues,
+				pagination: getPaginationMeta(page, limit, total),
+			};
+		}),
+
+		getById: procedure.input(z.object({ id: z.string().uuid() })).query(async ({ ctx, input }) => {
+			const env = await ctx.prisma.env.findUnique({
+				where: { id: input.id },
+				include: {
+					services: {
+						include: {
+							service: {
+								select: {
+									id: true,
+									name: true,
+									application: {
+										select: {
+											id: true,
+											name: true,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			});
+
+			if (!env) {
+				throw new TRPCError({
+					code: 'NOT_FOUND',
+					message: 'Environment variable not found',
 				});
+			}
 
-				// Don't decrypt values in list view, just mask them
-				const envsWithMaskedValues = envs.map((env) => ({
-					...env,
-					value: '••••••••',
-					services: env.services.map((s) => s.service),
-				}));
-
+			try {
 				return {
-					envs: envsWithMaskedValues,
-					pagination: getPaginationMeta(page, limit, total),
+					...env,
+					value: decrypt(env.value),
+					services: env.services.map(s => s.service),
 				};
-			}),
+			} catch (error) {
+				throw new TRPCError({
+					code: 'INTERNAL_SERVER_ERROR',
+					message: error instanceof Error ? error.message : 'Failed to decrypt environment variable value',
+					cause: error,
+				});
+			}
+		}),
 
-		getById: procedure
-			.input(z.object({ id: z.string().uuid() }))
-			.query(async ({ ctx, input }) => {
-				const env = await ctx.prisma.env.findUnique({
-					where: { id: input.id },
-					include: {
-						services: {
-							include: {
-								service: {
-									select: {
-										id: true,
-										name: true,
-										application: {
-											select: {
-												id: true,
-												name: true,
-											},
-										},
-									},
-								},
-							},
-						},
-					},
+		getByServiceId: procedure.input(z.object({ serviceId: z.string().uuid() })).query(async ({ ctx, input }) => {
+			const serviceEnvs = await ctx.prisma.serviceEnv.findMany({
+				where: { serviceId: input.serviceId },
+				include: {
+					env: true,
+				},
+			});
+
+			return serviceEnvs.map(se => ({
+				...se.env,
+				value: '••••••••', // Masked
+			}));
+		}),
+
+		create: procedure.input(createEnvSchema).mutation(async ({ ctx, input }) => {
+			const encryptedValue = encrypt(input.value);
+
+			const env = await ctx.prisma.env.create({
+				data: {
+					name: input.name ?? '',
+					key: input.key,
+					value: encryptedValue,
+					services: input.serviceIds?.length
+						? {
+								create: input.serviceIds.map(serviceId => ({
+									serviceId,
+								})),
+							}
+						: undefined,
+				},
+			});
+
+			return env;
+		}),
+
+		update: procedure.input(updateEnvSchema).mutation(async ({ ctx, input }) => {
+			const { id, serviceIds, ...data } = input;
+
+			const existing = await ctx.prisma.env.findUnique({
+				where: { id },
+			});
+
+			if (!existing) {
+				throw new TRPCError({
+					code: 'NOT_FOUND',
+					message: 'Environment variable not found',
+				});
+			}
+
+			// Encrypt value if provided
+			const updateData: Prisma.EnvUpdateInput = {
+				...(data.name !== undefined && { name: data.name }),
+				...(data.key && { key: data.key }),
+				...(data.value && { value: encrypt(data.value) }),
+			};
+
+			// Update service assignments if provided
+			if (serviceIds !== undefined) {
+				// Delete existing assignments
+				await ctx.prisma.serviceEnv.deleteMany({
+					where: { envId: id },
 				});
 
-				if (!env) {
-					throw new TRPCError({
-						code: 'NOT_FOUND',
-						message: 'Environment variable not found',
+				// Create new assignments
+				if (serviceIds.length > 0) {
+					await ctx.prisma.serviceEnv.createMany({
+						data: serviceIds.map(serviceId => ({
+							envId: id,
+							serviceId,
+						})),
 					});
 				}
+			}
 
-				try {
-					return {
-						...env,
-						value: decrypt(env.value),
-						services: env.services.map((s) => s.service),
-					};
-				} catch (error) {
-					throw new TRPCError({
-						code: 'INTERNAL_SERVER_ERROR',
-						message: error instanceof Error ? error.message : 'Failed to decrypt environment variable value',
-						cause: error,
-					});
-				}
-			}),
+			const env = await ctx.prisma.env.update({
+				where: { id },
+				data: updateData,
+			});
 
-		getByServiceId: procedure
-			.input(z.object({ serviceId: z.string().uuid() }))
-			.query(async ({ ctx, input }) => {
-				const serviceEnvs = await ctx.prisma.serviceEnv.findMany({
-					where: { serviceId: input.serviceId },
-					include: {
-						env: true,
-					},
+			return env;
+		}),
+
+		delete: procedure.input(z.object({ id: z.string().uuid() })).mutation(async ({ ctx, input }) => {
+			const existing = await ctx.prisma.env.findUnique({
+				where: { id: input.id },
+			});
+
+			if (!existing) {
+				throw new TRPCError({
+					code: 'NOT_FOUND',
+					message: 'Environment variable not found',
 				});
+			}
 
-				return serviceEnvs.map((se) => ({
-					...se.env,
-					value: '••••••••', // Masked
-				}));
-			}),
+			await ctx.prisma.env.delete({
+				where: { id: input.id },
+			});
 
-		create: procedure
-			.input(createEnvSchema)
-			.mutation(async ({ ctx, input }) => {
-				const encryptedValue = encrypt(input.value);
-
-				const env = await ctx.prisma.env.create({
-					data: {
-						name: input.name ?? "",
-						key: input.key,
-						value: encryptedValue,
-						services: input.serviceIds?.length
-							? {
-									create: input.serviceIds.map((serviceId) => ({
-										serviceId,
-									})),
-								}
-							: undefined,
-					},
-				});
-
-				return env;
-			}),
-
-		update: procedure
-			.input(updateEnvSchema)
-			.mutation(async ({ ctx, input }) => {
-				const { id, serviceIds, ...data } = input;
-
-				const existing = await ctx.prisma.env.findUnique({
-					where: { id },
-				});
-
-				if (!existing) {
-					throw new TRPCError({
-						code: 'NOT_FOUND',
-						message: 'Environment variable not found',
-					});
-				}
-
-				// Encrypt value if provided
-				const updateData: Prisma.EnvUpdateInput = {
-					...(data.name !== undefined && { name: data.name }),
-					...(data.key && { key: data.key }),
-					...(data.value && { value: encrypt(data.value) }),
-				};
-
-				// Update service assignments if provided
-				if (serviceIds !== undefined) {
-					// Delete existing assignments
-					await ctx.prisma.serviceEnv.deleteMany({
-						where: { envId: id },
-					});
-
-					// Create new assignments
-					if (serviceIds.length > 0) {
-						await ctx.prisma.serviceEnv.createMany({
-							data: serviceIds.map((serviceId) => ({
-								envId: id,
-								serviceId,
-							})),
-						});
-					}
-				}
-
-				const env = await ctx.prisma.env.update({
-					where: { id },
-					data: updateData,
-				});
-
-				return env;
-			}),
-
-		delete: procedure
-			.input(z.object({ id: z.string().uuid() }))
-			.mutation(async ({ ctx, input }) => {
-				const existing = await ctx.prisma.env.findUnique({
-					where: { id: input.id },
-				});
-
-				if (!existing) {
-					throw new TRPCError({
-						code: 'NOT_FOUND',
-						message: 'Environment variable not found',
-					});
-				}
-
-				await ctx.prisma.env.delete({
-					where: { id: input.id },
-				});
-
-				return { success: true };
-			}),
+			return { success: true };
+		}),
 	});
 };

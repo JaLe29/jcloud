@@ -1,9 +1,9 @@
-import { TRPCError } from '@trpc/server';
-import type { Prisma } from '@prisma/client';
-import { z } from 'zod';
 import { createDeployTaskMeta, createServiceUpdateTaskMeta } from '@jcloud/backend-shared';
+import type { Prisma } from '@prisma/client';
+import { TRPCError } from '@trpc/server';
+import { z } from 'zod';
+import { createPaginationInputSchema, getPaginationMeta, getPaginationParams } from '../../utils/pagination';
 import type { Procedure, Router } from '../router';
-import { getPaginationMeta, getPaginationParams, createPaginationInputSchema } from '../../utils/pagination';
 
 const serviceFilterSchema = z
 	.object({
@@ -71,215 +71,207 @@ const updateServiceSchema = z.object({
 
 export const serviceRouter = (router: Router, procedure: Procedure) => {
 	return router({
-		list: procedure
-			.input(servicePaginationSchema)
-			.query(async ({ ctx, input }) => {
-				const { page, limit, skip, take } = getPaginationParams(input);
+		list: procedure.input(servicePaginationSchema).query(async ({ ctx, input }) => {
+			const { page, limit, skip, take } = getPaginationParams(input);
 
-				const sortBy = input?.sortBy || 'createdAt';
-				const sortOrder = input?.sortOrder || 'desc';
+			const sortBy = input?.sortBy || 'createdAt';
+			const sortOrder = input?.sortOrder || 'desc';
 
-				const where: Prisma.ServiceWhereInput = {};
+			const where: Prisma.ServiceWhereInput = {};
 
-				if (input?.filter?.applicationId) {
-					where.applicationId = input.filter.applicationId;
-				}
+			if (input?.filter?.applicationId) {
+				where.applicationId = input.filter.applicationId;
+			}
 
-				if (input?.filter?.name) {
-					where.name = {
-						contains: input.filter.name,
-						mode: 'insensitive',
-					};
-				}
-
-				const total = await ctx.prisma.service.count({ where });
-
-				const orderBy: Prisma.ServiceOrderByWithRelationInput = {
-					[sortBy]: sortOrder,
+			if (input?.filter?.name) {
+				where.name = {
+					contains: input.filter.name,
+					mode: 'insensitive',
 				};
+			}
 
-				const services = await ctx.prisma.service.findMany({
-					where,
-					skip,
-					take,
-					orderBy,
-					include: {
-						application: {
-							select: {
-								id: true,
-								name: true,
-								namespace: true,
+			const total = await ctx.prisma.service.count({ where });
+
+			const orderBy: Prisma.ServiceOrderByWithRelationInput = {
+				[sortBy]: sortOrder,
+			};
+
+			const services = await ctx.prisma.service.findMany({
+				where,
+				skip,
+				take,
+				orderBy,
+				include: {
+					application: {
+						select: {
+							id: true,
+							name: true,
+							namespace: true,
+						},
+					},
+				},
+			});
+
+			return {
+				services,
+				pagination: getPaginationMeta(page, limit, total),
+			};
+		}),
+
+		getById: procedure.input(z.object({ id: z.string().uuid() })).query(async ({ ctx, input }) => {
+			const service = await ctx.prisma.service.findUnique({
+				where: { id: input.id },
+				include: {
+					application: {
+						select: {
+							id: true,
+							name: true,
+							namespace: true,
+						},
+					},
+				},
+			});
+
+			if (!service) {
+				throw new TRPCError({
+					code: 'NOT_FOUND',
+					message: 'Service not found',
+				});
+			}
+
+			return service;
+		}),
+
+		create: procedure.input(createServiceSchema).mutation(async ({ ctx, input }) => {
+			const application = await ctx.prisma.application.findUnique({
+				where: { id: input.applicationId },
+			});
+
+			if (!application) {
+				throw new TRPCError({
+					code: 'NOT_FOUND',
+					message: 'Application not found',
+				});
+			}
+
+			const existing = await ctx.prisma.service.findFirst({
+				where: {
+					applicationId: input.applicationId,
+					name: input.name,
+				},
+			});
+
+			if (existing) {
+				throw new TRPCError({
+					code: 'CONFLICT',
+					message: 'Service with this name already exists in this application',
+				});
+			}
+
+			const service = await ctx.prisma.service.create({
+				data: {
+					name: input.name,
+					applicationId: input.applicationId,
+					replicas: input.replicas,
+					containerPort: input.containerPort,
+					ingressUrl: input.ingressUrl,
+					cpuRequest: input.cpuRequest,
+					cpuLimit: input.cpuLimit,
+					memoryRequest: input.memoryRequest,
+					memoryLimit: input.memoryLimit,
+				},
+			});
+
+			return service;
+		}),
+
+		update: procedure.input(updateServiceSchema).mutation(async ({ ctx, input }) => {
+			const { id, ...data } = input;
+
+			const existing = await ctx.prisma.service.findUnique({
+				where: { id },
+				include: {
+					apiKey: {
+						include: {
+							deploys: {
+								orderBy: { createdAt: 'desc' },
+								take: 1,
 							},
 						},
 					},
+				},
+			});
+
+			if (!existing) {
+				throw new TRPCError({
+					code: 'NOT_FOUND',
+					message: 'Service not found',
 				});
+			}
 
-				return {
-					services,
-					pagination: getPaginationMeta(page, limit, total),
-				};
-			}),
-
-		getById: procedure
-			.input(z.object({ id: z.string().uuid() }))
-			.query(async ({ ctx, input }) => {
-				const service = await ctx.prisma.service.findUnique({
-					where: { id: input.id },
-					include: {
-						application: {
-							select: {
-								id: true,
-								name: true,
-								namespace: true,
-							},
-						},
-					},
-				});
-
-				if (!service) {
-					throw new TRPCError({
-						code: 'NOT_FOUND',
-						message: 'Service not found',
-					});
-				}
-
-				return service;
-			}),
-
-		create: procedure
-			.input(createServiceSchema)
-			.mutation(async ({ ctx, input }) => {
-				const application = await ctx.prisma.application.findUnique({
-					where: { id: input.applicationId },
-				});
-
-				if (!application) {
-					throw new TRPCError({
-						code: 'NOT_FOUND',
-						message: 'Application not found',
-					});
-				}
-
-				const existing = await ctx.prisma.service.findFirst({
+			if (data.name && data.name !== existing.name) {
+				const nameExists = await ctx.prisma.service.findFirst({
 					where: {
-						applicationId: input.applicationId,
-						name: input.name,
+						applicationId: existing.applicationId,
+						name: data.name,
 					},
 				});
 
-				if (existing) {
+				if (nameExists) {
 					throw new TRPCError({
 						code: 'CONFLICT',
 						message: 'Service with this name already exists in this application',
 					});
 				}
+			}
 
-				const service = await ctx.prisma.service.create({
-					data: {
-						name: input.name,
-						applicationId: input.applicationId,
-						replicas: input.replicas,
-						containerPort: input.containerPort,
-						ingressUrl: input.ingressUrl,
-						cpuRequest: input.cpuRequest,
-						cpuLimit: input.cpuLimit,
-						memoryRequest: input.memoryRequest,
-						memoryLimit: input.memoryLimit,
-					},
-				});
+			const service = await ctx.prisma.service.update({
+				where: { id },
+				data,
+			});
 
-				return service;
-			}),
-
-			update: procedure
-			.input(updateServiceSchema)
-			.mutation(async ({ ctx, input }) => {
-				const { id, ...data } = input;
-
-				const existing = await ctx.prisma.service.findUnique({
-					where: { id },
-					include: {
-						apiKey: {
-							include: {
-								deploys: {
-									orderBy: { createdAt: 'desc' },
-									take: 1,
-								},
-							},
-						},
-					},
-				});
-
-				if (!existing) {
-					throw new TRPCError({
-						code: 'NOT_FOUND',
-						message: 'Service not found',
-					});
-				}
-
-				if (data.name && data.name !== existing.name) {
-					const nameExists = await ctx.prisma.service.findFirst({
-						where: {
-							applicationId: existing.applicationId,
-							name: data.name,
+			// Create task for service update if there's a deployed image
+			if (existing.apiKey && existing.apiKey.deploys.length > 0) {
+				const latestDeploy = existing.apiKey.deploys[0];
+				if (latestDeploy) {
+					await ctx.prisma.task.create({
+						data: {
+							serviceId: id,
+							meta: createServiceUpdateTaskMeta(latestDeploy.image) as unknown as Prisma.InputJsonValue,
 						},
 					});
-
-					if (nameExists) {
-						throw new TRPCError({
-							code: 'CONFLICT',
-							message: 'Service with this name already exists in this application',
-						});
-					}
 				}
+			}
 
-				const service = await ctx.prisma.service.update({
-					where: { id },
-					data,
+			return service;
+		}),
+
+		delete: procedure.input(z.object({ id: z.string().uuid() })).mutation(async ({ ctx, input }) => {
+			const existing = await ctx.prisma.service.findUnique({
+				where: { id: input.id },
+			});
+
+			if (!existing) {
+				throw new TRPCError({
+					code: 'NOT_FOUND',
+					message: 'Service not found',
 				});
+			}
 
-				// Create task for service update if there's a deployed image
-				if (existing.apiKey && existing.apiKey.deploys.length > 0) {
-					const latestDeploy = existing.apiKey.deploys[0];
-					if (latestDeploy) {
-						await ctx.prisma.task.create({
-							data: {
-								serviceId: id,
-								meta: createServiceUpdateTaskMeta(latestDeploy.image) as unknown as Prisma.InputJsonValue,
-							},
-						});
-					}
-				}
+			await ctx.prisma.service.delete({
+				where: { id: input.id },
+			});
 
-				return service;
-			}),
-
-		delete: procedure
-			.input(z.object({ id: z.string().uuid() }))
-			.mutation(async ({ ctx, input }) => {
-				const existing = await ctx.prisma.service.findUnique({
-					where: { id: input.id },
-				});
-
-				if (!existing) {
-					throw new TRPCError({
-						code: 'NOT_FOUND',
-						message: 'Service not found',
-					});
-				}
-
-				await ctx.prisma.service.delete({
-					where: { id: input.id },
-				});
-
-				return { success: true };
-			}),
+			return { success: true };
+		}),
 
 		deploy: procedure
-			.input(z.object({
-				serviceId: z.string().uuid(),
-				image: z.string().min(1, 'Docker image is required'),
-			}))
+			.input(
+				z.object({
+					serviceId: z.string().uuid(),
+					image: z.string().min(1, 'Docker image is required'),
+				}),
+			)
 			.mutation(async ({ ctx, input }) => {
 				// Verify service exists
 				const service = await ctx.prisma.service.findUnique({

@@ -37,7 +37,13 @@ export const createPaginationInputSchema = <
 	return z
 		.object({
 			page: z.number().int().min(1).default(PAGINATION_DEFAULTS.page).optional(),
-			limit: z.number().int().min(1).max(PAGINATION_DEFAULTS.maxLimit).default(PAGINATION_DEFAULTS.limit).optional(),
+			limit: z
+				.number()
+				.int()
+				.min(1)
+				.max(PAGINATION_DEFAULTS.maxLimit)
+				.default(PAGINATION_DEFAULTS.limit)
+				.optional(),
 			sortBy: z.enum(sortableFields).optional(),
 			sortOrder: z.enum(['asc', 'desc']).optional(),
 			filter: (filterSchema ?? z.undefined()).optional(),
@@ -94,4 +100,3 @@ export const getPaginationMeta = (page: number, limit: number, total: number): P
 		hasPreviousPage: page > 1,
 	};
 };
-

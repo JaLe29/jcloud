@@ -1,9 +1,9 @@
-import { useNavigate, useParams } from 'react-router-dom';
-import { Card, Typography, Space, Button, Form, Input, message, Spin, Select, Alert } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
+import { Alert, Button, Card, Form, Input, message, Select, Space, Spin, Typography } from 'antd';
 import { useEffect } from 'react';
-import { trpc } from '../utils/trpc';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useClusterStore } from '../stores/clusterStore';
+import { trpc } from '../utils/trpc';
 
 const { Title, Text } = Typography;
 
@@ -33,12 +33,12 @@ export const ApplicationFormPage = () => {
 	);
 
 	const createMutation = trpc.application.create.useMutation({
-		onSuccess: (data) => {
+		onSuccess: data => {
 			message.success('Application created');
 			utils.application.list.invalidate();
 			navigate(`/applications/${data.id}`);
 		},
-		onError: (error) => {
+		onError: error => {
 			message.error(error.message);
 		},
 	});
@@ -50,7 +50,7 @@ export const ApplicationFormPage = () => {
 			utils.application.getById.invalidate({ id: id! });
 			navigate(`/applications/${id}`);
 		},
-		onError: (error) => {
+		onError: error => {
 			message.error(error.message);
 		},
 	});
@@ -64,7 +64,7 @@ export const ApplicationFormPage = () => {
 			});
 		} else if (!isEditing && selectedClusterId && clusters) {
 			// Only pre-fill if the selected cluster actually exists in the list
-			const clusterExists = clusters.some((c) => c.id === selectedClusterId);
+			const clusterExists = clusters.some(c => c.id === selectedClusterId);
 			if (clusterExists) {
 				form.setFieldsValue({
 					clusterId: selectedClusterId,
@@ -97,7 +97,9 @@ export const ApplicationFormPage = () => {
 	if (isEditing && isLoadingApplication) {
 		return (
 			<Space direction="vertical" size="large" style={{ width: '100%' }}>
-				<Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>Back</Button>
+				<Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
+					Back
+				</Button>
 				<Card style={{ textAlign: 'center', padding: 40 }}>
 					<Spin />
 				</Card>
@@ -107,7 +109,9 @@ export const ApplicationFormPage = () => {
 
 	return (
 		<Space direction="vertical" size="large" style={{ width: '100%' }}>
-			<Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>Back</Button>
+			<Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
+				Back
+			</Button>
 
 			<Card style={{ maxWidth: 500 }}>
 				<Space direction="vertical" size="large" style={{ width: '100%' }}>
@@ -129,12 +133,7 @@ export const ApplicationFormPage = () => {
 						/>
 					)}
 
-					<Form
-						form={form}
-						layout="vertical"
-						onFinish={handleSubmit}
-						requiredMark={false}
-					>
+					<Form form={form} layout="vertical" onFinish={handleSubmit} requiredMark={false}>
 						<Form.Item
 							label="Cluster"
 							name="clusterId"
@@ -144,7 +143,7 @@ export const ApplicationFormPage = () => {
 							<Select
 								placeholder="Select cluster"
 								disabled={isEditing}
-								options={clusters?.map((cluster) => ({
+								options={clusters?.map(cluster => ({
 									label: cluster.name,
 									value: cluster.id,
 								}))}

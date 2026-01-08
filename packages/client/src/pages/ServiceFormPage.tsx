@@ -1,8 +1,8 @@
-import { useNavigate, useParams } from 'react-router-dom';
-import { Card, Typography, Space, Button, Form, Input, InputNumber, message, Spin, Tag, Divider, Table } from 'antd';
-import { ArrowLeftOutlined, SaveOutlined, PlusOutlined, LockOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, LockOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
+import { Button, Card, Divider, Form, Input, InputNumber, message, Space, Spin, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { trpc } from '../utils/trpc';
 
 const { Title, Text } = Typography;
@@ -62,10 +62,7 @@ export const ServiceFormPage = () => {
 		},
 	);
 
-	const { data: serviceEnvs } = trpc.env.getByServiceId.useQuery(
-		{ serviceId: serviceId! },
-		{ enabled: isEditing },
-	);
+	const { data: serviceEnvs } = trpc.env.getByServiceId.useQuery({ serviceId: serviceId! }, { enabled: isEditing });
 
 	const createMutation = trpc.service.create.useMutation({
 		onSuccess: () => {
@@ -73,7 +70,7 @@ export const ServiceFormPage = () => {
 			utils.application.getById.invalidate({ id: applicationId! });
 			navigate(`/applications/${applicationId}`);
 		},
-		onError: (error) => {
+		onError: error => {
 			message.error(error.message);
 		},
 	});
@@ -85,7 +82,7 @@ export const ServiceFormPage = () => {
 			utils.service.getById.invalidate({ id: serviceId! });
 			navigate(`/applications/${applicationId}`);
 		},
-		onError: (error) => {
+		onError: error => {
 			message.error(error.message);
 		},
 	});
@@ -150,7 +147,9 @@ export const ServiceFormPage = () => {
 	if (isLoadingApplication || (isEditing && isLoadingService)) {
 		return (
 			<Space direction="vertical" size="large" style={{ width: '100%' }}>
-				<Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>Back</Button>
+				<Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
+					Back
+				</Button>
 				<Card style={{ textAlign: 'center', padding: 40 }}>
 					<Spin />
 				</Card>
@@ -161,7 +160,9 @@ export const ServiceFormPage = () => {
 	if (!application) {
 		return (
 			<Space direction="vertical" size="large" style={{ width: '100%' }}>
-				<Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>Back</Button>
+				<Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
+					Back
+				</Button>
 				<Card style={{ textAlign: 'center', padding: 40 }}>
 					<Title level={4}>Application not found</Title>
 				</Card>
@@ -178,7 +179,9 @@ export const ServiceFormPage = () => {
 			<Card style={{ maxWidth: 600 }}>
 				<Space direction="vertical" size="large" style={{ width: '100%' }}>
 					<div>
-						<Text type="secondary" style={{ fontSize: 12 }}>Application</Text>
+						<Text type="secondary" style={{ fontSize: 12 }}>
+							Application
+						</Text>
 						<div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
 							<Text strong>{application.name}</Text>
 							<Tag>{application.namespace}</Tag>
@@ -212,11 +215,7 @@ export const ServiceFormPage = () => {
 							<Input placeholder="api-gateway" />
 						</Form.Item>
 
-						<Form.Item
-							label="Replicas"
-							name="replicas"
-							rules={[{ required: true, message: 'Required' }]}
-						>
+						<Form.Item label="Replicas" name="replicas" rules={[{ required: true, message: 'Required' }]}>
 							<InputNumber min={0} max={100} style={{ width: '100%' }} />
 						</Form.Item>
 
@@ -332,17 +331,10 @@ export const ServiceFormPage = () => {
 
 						<Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
 							<Space>
-								<Button
-									type="primary"
-									htmlType="submit"
-									icon={<SaveOutlined />}
-									loading={isPending}
-								>
+								<Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={isPending}>
 									{isEditing ? 'Save' : 'Create'}
 								</Button>
-								<Button onClick={() => navigate(`/applications/${applicationId}`)}>
-									Cancel
-								</Button>
+								<Button onClick={() => navigate(`/applications/${applicationId}`)}>Cancel</Button>
 							</Space>
 						</Form.Item>
 					</Form>
@@ -353,10 +345,7 @@ export const ServiceFormPage = () => {
 				<Card
 					title={`Environment Variables (${serviceEnvs?.length || 0})`}
 					extra={
-						<Button
-							icon={<PlusOutlined />}
-							onClick={() => navigate(`/envs?serviceId=${serviceId}`)}
-						>
+						<Button icon={<PlusOutlined />} onClick={() => navigate(`/envs?serviceId=${serviceId}`)}>
 							Manage Variables
 						</Button>
 					}

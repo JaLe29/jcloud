@@ -1,11 +1,17 @@
-import { Card, Table, Typography, Space, Tag, Button } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import { EyeOutlined, ClockCircleOutlined, SyncOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
-import dayjs from 'dayjs';
-import { trpc } from '../../utils/trpc';
-import type { inferRouterOutputs } from '@trpc/server';
+import {
+	CheckCircleOutlined,
+	ClockCircleOutlined,
+	CloseCircleOutlined,
+	EyeOutlined,
+	SyncOutlined,
+} from '@ant-design/icons';
 import type { AppRouter } from '@jcloud/bff/src/trpc/router';
+import type { inferRouterOutputs } from '@trpc/server';
+import { Button, Card, Space, Table, Tag, Typography } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import dayjs from 'dayjs';
+import { useNavigate } from 'react-router-dom';
+import { trpc } from '../../utils/trpc';
 
 const { Text } = Typography;
 
@@ -55,9 +61,7 @@ export const ApiDeployHistory = ({ serviceId }: ApiDeployHistoryProps) => {
 			dataIndex: 'createdAt',
 			key: 'createdAt',
 			width: 160,
-			render: (date: Date) => (
-				<Text style={{ fontSize: 12 }}>{dayjs(date).format('DD.MM.YYYY HH:mm:ss')}</Text>
-			),
+			render: (date: Date) => <Text style={{ fontSize: 12 }}>{dayjs(date).format('DD.MM.YYYY HH:mm:ss')}</Text>,
 		},
 		{
 			title: 'Docker Image',
@@ -67,7 +71,9 @@ export const ApiDeployHistory = ({ serviceId }: ApiDeployHistoryProps) => {
 				const meta = record.meta as Record<string, unknown> | null;
 				const image = meta?.image as string | undefined;
 				return image ? (
-					<Text code style={{ fontSize: 12 }}>{image}</Text>
+					<Text code style={{ fontSize: 12 }}>
+						{image}
+					</Text>
 				) : (
 					<Text type="secondary">-</Text>
 				);
@@ -99,7 +105,7 @@ export const ApiDeployHistory = ({ serviceId }: ApiDeployHistoryProps) => {
 					total: data?.pagination?.total || 0,
 					pageSize: 10,
 					showSizeChanger: false,
-					showTotal: (total) => `${total} deployment${total !== 1 ? 's' : ''}`,
+					showTotal: total => `${total} deployment${total !== 1 ? 's' : ''}`,
 				}}
 				locale={{
 					emptyText: (

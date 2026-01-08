@@ -8,13 +8,12 @@ interface ClusterStore {
 
 export const useClusterStore = create<ClusterStore>()(
 	persist(
-		(set) => ({
+		set => ({
 			selectedClusterId: null,
-			setSelectedClusterId: (clusterId) => set({ selectedClusterId: clusterId }),
+			setSelectedClusterId: clusterId => set({ selectedClusterId: clusterId }),
 		}),
 		{
 			name: 'cluster-storage',
-		}
-	)
+		},
+	),
 );
-

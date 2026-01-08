@@ -1,19 +1,13 @@
+import { ArrowLeftOutlined, DeleteOutlined, EditOutlined, LinkOutlined, RocketOutlined } from '@ant-design/icons';
+import { Button, Card, Descriptions, Form, Input, Modal, message, Space, Tag, Typography } from 'antd';
+import dayjs from 'dayjs';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Card, Typography, Space, Button, Modal, message, Descriptions, Tag, Input, Form } from 'antd';
-import {
-	ArrowLeftOutlined,
-	DeleteOutlined,
-	EditOutlined,
-	LinkOutlined,
-	RocketOutlined,
-} from '@ant-design/icons';
-import dayjs from 'dayjs';
-import { trpc } from '../utils/trpc';
-import { ServiceApiKey } from '../components/features/ServiceApiKey';
 import { ApiDeployHistory } from '../components/features/ApiDeployHistory';
+import { ServiceApiKey } from '../components/features/ServiceApiKey';
 import { ServiceDockerSecrets } from '../components/features/ServiceDockerSecrets';
 import { ServiceTasks } from '../components/features/ServiceTasks';
+import { trpc } from '../utils/trpc';
 
 const { Title, Text } = Typography;
 
@@ -22,7 +16,11 @@ export const ServiceDetailPage = () => {
 	const navigate = useNavigate();
 	const utils = trpc.useUtils();
 
-	const { data: service, isLoading, error } = trpc.service.getById.useQuery(
+	const {
+		data: service,
+		isLoading,
+		error,
+	} = trpc.service.getById.useQuery(
 		{ id: serviceId! },
 		{
 			enabled: !!serviceId,
@@ -37,18 +35,18 @@ export const ServiceDetailPage = () => {
 			message.success('Service deleted');
 			navigate(`/applications/${applicationId}`);
 		},
-		onError: (error) => {
+		onError: error => {
 			message.error(error.message);
 		},
 	});
 
 	const deployMutation = trpc.service.deploy.useMutation({
-		onSuccess: (data) => {
+		onSuccess: data => {
 			message.success(`Deployment started: ${data.image}`);
 			setDeployImage('');
 			utils.apikey.getDeployHistory.invalidate();
 		},
-		onError: (error) => {
+		onError: error => {
 			message.error(error.message);
 		},
 	});
@@ -70,13 +68,17 @@ export const ServiceDetailPage = () => {
 			okText: 'Delete',
 			okType: 'danger',
 			onOk: () => {
-				if (serviceId) deleteServiceMutation.mutate({ id: serviceId });
+				if (serviceId) {
+					deleteServiceMutation.mutate({ id: serviceId });
+				}
 			},
 		});
 	};
 
 	const formatResource = (request: number | null, limit: number | null, unit: string) => {
-		if (!request && !limit) return 'Not set';
+		if (!request && !limit) {
+			return 'Not set';
+		}
 		return `${request ?? '-'} / ${limit ?? '-'} ${unit}`;
 	};
 
@@ -84,10 +86,7 @@ export const ServiceDetailPage = () => {
 		const isNotFound = error.data?.code === 'NOT_FOUND';
 		return (
 			<Space direction="vertical" size="large" style={{ width: '100%' }}>
-				<Button
-					icon={<ArrowLeftOutlined />}
-					onClick={() => navigate(`/applications/${applicationId}`)}
-				>
+				<Button icon={<ArrowLeftOutlined />} onClick={() => navigate(`/applications/${applicationId}`)}>
 					Back to Application
 				</Button>
 				<Card style={{ textAlign: 'center', padding: 40 }}>
@@ -101,10 +100,7 @@ export const ServiceDetailPage = () => {
 	if (isLoading || !service) {
 		return (
 			<Space direction="vertical" size="large" style={{ width: '100%' }}>
-				<Button
-					icon={<ArrowLeftOutlined />}
-					onClick={() => navigate(`/applications/${applicationId}`)}
-				>
+				<Button icon={<ArrowLeftOutlined />} onClick={() => navigate(`/applications/${applicationId}`)}>
 					Back
 				</Button>
 				<Card loading />
@@ -114,15 +110,22 @@ export const ServiceDetailPage = () => {
 
 	return (
 		<Space direction="vertical" size="large" style={{ width: '100%' }}>
-			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+			<div
+				style={{
+					display: 'flex',
+					justifyContent: 'space-between',
+					alignItems: 'center',
+					flexWrap: 'wrap',
+					gap: 16,
+				}}
+			>
 				<Space>
-					<Button
-						icon={<ArrowLeftOutlined />}
-						onClick={() => navigate(`/applications/${applicationId}`)}
-					>
+					<Button icon={<ArrowLeftOutlined />} onClick={() => navigate(`/applications/${applicationId}`)}>
 						Back
 					</Button>
-					<Title level={2} style={{ margin: 0 }}>{service.name}</Title>
+					<Title level={2} style={{ margin: 0 }}>
+						{service.name}
+					</Title>
 					<Tag>{service.application.name}</Tag>
 				</Space>
 				<Space>
@@ -191,7 +194,7 @@ export const ServiceDetailPage = () => {
 							<Input
 								placeholder="Docker image (e.g. ghcr.io/user/app:latest)"
 								value={deployImage}
-								onChange={(e) => setDeployImage(e.target.value)}
+								onChange={e => setDeployImage(e.target.value)}
 								onPressEnter={handleDeploy}
 								disabled={deployMutation.isPending}
 							/>
@@ -217,10 +220,7 @@ export const ServiceDetailPage = () => {
 			<Card title="Environment Variables">
 				<Space direction="vertical" style={{ width: '100%' }}>
 					<Text type="secondary">Environment variables for this service</Text>
-					<Button
-						type="primary"
-						onClick={() => navigate(`/envs?serviceId=${service.id}`)}
-					>
+					<Button type="primary" onClick={() => navigate(`/envs?serviceId=${service.id}`)}>
 						Manage Environment Variables
 					</Button>
 				</Space>
@@ -228,4 +228,3 @@ export const ServiceDetailPage = () => {
 		</Space>
 	);
 };
-

@@ -1,12 +1,18 @@
-import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Table, Typography, Space, Card, Tag, Button, Select } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import { EyeOutlined, ClockCircleOutlined, SyncOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
-import dayjs from 'dayjs';
-import { trpc } from '../utils/trpc';
-import type { inferRouterOutputs } from '@trpc/server';
+import {
+	CheckCircleOutlined,
+	ClockCircleOutlined,
+	CloseCircleOutlined,
+	EyeOutlined,
+	SyncOutlined,
+} from '@ant-design/icons';
 import type { AppRouter } from '@jcloud/bff/src/trpc/router';
+import type { inferRouterOutputs } from '@trpc/server';
+import { Button, Card, Select, Space, Table, Tag, Typography } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import dayjs from 'dayjs';
+import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { trpc } from '../utils/trpc';
 
 const { Title, Text } = Typography;
 
@@ -45,7 +51,7 @@ export const TasksPage = () => {
 	// Build application options
 	const applicationOptions = useMemo(
 		() =>
-			applicationsData?.applications.map((app) => ({
+			applicationsData?.applications.map(app => ({
 				label: app.name,
 				value: app.id,
 			})) || [],
@@ -54,14 +60,16 @@ export const TasksPage = () => {
 
 	// Build service options - all services or filtered by selected application
 	const serviceOptions = useMemo(() => {
-		if (!applicationsData) return [];
+		if (!applicationsData) {
+			return [];
+		}
 
 		const apps = applicationFilter
-			? applicationsData.applications.filter((app) => app.id === applicationFilter)
+			? applicationsData.applications.filter(app => app.id === applicationFilter)
 			: applicationsData.applications;
 
-		return apps.flatMap((app) =>
-			app.services.map((service) => ({
+		return apps.flatMap(app =>
+			app.services.map(service => ({
 				label: `${app.name} / ${service.name}`,
 				value: service.id,
 			})),
@@ -87,9 +95,13 @@ export const TasksPage = () => {
 	};
 
 	const getTaskType = (meta: Record<string, unknown> | null): string => {
-		if (!meta) return 'Unknown';
+		if (!meta) {
+			return 'Unknown';
+		}
 		const type = meta.type as string | undefined;
-		if (type === 'deploy-created') return 'Deployment';
+		if (type === 'deploy-created') {
+			return 'Deployment';
+		}
 		return type || 'Unknown';
 	};
 
@@ -124,7 +136,9 @@ export const TasksPage = () => {
 			render: (_: unknown, record: TaskData) => (
 				<Space direction="vertical" size={0}>
 					<Text>{record.service.name}</Text>
-					<Text type="secondary" style={{ fontSize: 12 }}>{record.service.application.name}</Text>
+					<Text type="secondary" style={{ fontSize: 12 }}>
+						{record.service.application.name}
+					</Text>
 				</Space>
 			),
 		},
@@ -133,16 +147,16 @@ export const TasksPage = () => {
 			dataIndex: 'createdAt',
 			key: 'createdAt',
 			width: 160,
-			render: (date: Date) => (
-				<Text style={{ fontSize: 12 }}>{dayjs(date).format('DD.MM.YYYY HH:mm:ss')}</Text>
-			),
+			render: (date: Date) => <Text style={{ fontSize: 12 }}>{dayjs(date).format('DD.MM.YYYY HH:mm:ss')}</Text>,
 		},
 		{
 			title: 'Duration',
 			key: 'duration',
 			width: 100,
 			render: (_: unknown, record: TaskData) => {
-				if (!record.startedAt) return <Text type="secondary">-</Text>;
+				if (!record.startedAt) {
+					return <Text type="secondary">-</Text>;
+				}
 				const end = record.finishedAt ? dayjs(record.finishedAt) : dayjs();
 				const duration = end.diff(dayjs(record.startedAt), 'second');
 				return <Text style={{ fontSize: 12 }}>{duration}s</Text>;
@@ -165,8 +179,18 @@ export const TasksPage = () => {
 
 	return (
 		<Space direction="vertical" size="large" style={{ width: '100%' }}>
-			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-				<Title level={2} style={{ margin: 0 }}>Tasks</Title>
+			<div
+				style={{
+					display: 'flex',
+					justifyContent: 'space-between',
+					alignItems: 'center',
+					flexWrap: 'wrap',
+					gap: 16,
+				}}
+			>
+				<Title level={2} style={{ margin: 0 }}>
+					Tasks
+				</Title>
 				<Space wrap>
 					<Select
 						placeholder="Filter by application"
@@ -220,7 +244,7 @@ export const TasksPage = () => {
 						total: data?.pagination?.total || 0,
 						pageSize: 20,
 						showSizeChanger: false,
-						showTotal: (total) => `${total} task${total !== 1 ? 's' : ''}`,
+						showTotal: total => `${total} task${total !== 1 ? 's' : ''}`,
 						onChange: setPage,
 					}}
 					locale={{

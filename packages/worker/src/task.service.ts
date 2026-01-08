@@ -150,14 +150,22 @@ export class TaskService {
 		});
 	}
 
-	async createDockerSecret(coreApi: CoreV1Api, namespace: string, secret: DockerSecretData, taskId: string): Promise<V1Secret> {
+	async createDockerSecret(
+		coreApi: CoreV1Api,
+		namespace: string,
+		secret: DockerSecretData,
+		taskId: string,
+	): Promise<V1Secret> {
 		const secretName = toK8sName(secret.name);
 		const k8sNamespace = toK8sName(namespace, 63);
 
 		// Check if secret already exists
 		try {
 			const existing = await coreApi.readNamespacedSecret({ name: secretName, namespace: k8sNamespace });
-			await this.appendLog(taskId, `Docker secret ${secretName} already exists in ${k8sNamespace}, skipping creation`);
+			await this.appendLog(
+				taskId,
+				`Docker secret ${secretName} already exists in ${k8sNamespace}, skipping creation`,
+			);
 			return existing;
 		} catch (err: unknown) {
 			// Secret doesn't exist, continue to create it
@@ -263,12 +271,13 @@ export class TaskService {
 			rollingUpdate.maxUnavailable = config.maxUnavailable;
 		}
 
-		const strategy = Object.keys(rollingUpdate).length > 0
-			? {
-					type: 'RollingUpdate',
-					rollingUpdate,
-				}
-			: undefined;
+		const strategy =
+			Object.keys(rollingUpdate).length > 0
+				? {
+						type: 'RollingUpdate',
+						rollingUpdate,
+					}
+				: undefined;
 
 		const deployment: V1Deployment = {
 			metadata: {
@@ -330,7 +339,10 @@ export class TaskService {
 				await this.appendLog(taskId, `  Readiness Probe: ${config.readinessProbe.path}`);
 			}
 			if (config.maxSurge || config.maxUnavailable) {
-				await this.appendLog(taskId, `  Rolling Update: maxSurge=${config.maxSurge || 'default'}, maxUnavailable=${config.maxUnavailable || 'default'}`);
+				await this.appendLog(
+					taskId,
+					`  Rolling Update: maxSurge=${config.maxSurge || 'default'}, maxUnavailable=${config.maxUnavailable || 'default'}`,
+				);
 			}
 			const response = await appsApi.replaceNamespacedDeployment({
 				name: deploymentName,
@@ -359,7 +371,10 @@ export class TaskService {
 			await this.appendLog(taskId, `  Readiness Probe: ${config.readinessProbe.path}`);
 		}
 		if (config.maxSurge || config.maxUnavailable) {
-			await this.appendLog(taskId, `  Rolling Update: maxSurge=${config.maxSurge || 'default'}, maxUnavailable=${config.maxUnavailable || 'default'}`);
+			await this.appendLog(
+				taskId,
+				`  Rolling Update: maxSurge=${config.maxSurge || 'default'}, maxUnavailable=${config.maxUnavailable || 'default'}`,
+			);
 		}
 		if (config.env.length > 0) {
 			await this.appendLog(taskId, `  Environment Variables: ${config.env.length}`);
@@ -375,7 +390,12 @@ export class TaskService {
 		return response;
 	}
 
-	async createK8sService(coreApi: CoreV1Api, config: ServiceConfig, deploymentName: string, taskId: string): Promise<V1Service> {
+	async createK8sService(
+		coreApi: CoreV1Api,
+		config: ServiceConfig,
+		deploymentName: string,
+		taskId: string,
+	): Promise<V1Service> {
 		const serviceName = toK8sName(config.name);
 		const k8sNamespace = toK8sName(config.namespace, 63);
 
@@ -507,21 +527,18 @@ export class TaskService {
 
 		try {
 			await this.appendLog(task.id, `Starting deployment task ${task.id}`);
-			
+
 			let image: string;
-			let taskType: string;
 
 			if (isDeployTaskMeta(task.meta)) {
 				const deployMeta: DeployTaskMeta = task.meta;
 				image = deployMeta.image;
-				taskType = 'deploy';
-				await this.appendLog(task.id, `Task type: Deploy`);
+				await this.appendLog(task.id, 'Task type: Deploy');
 				await this.appendLog(task.id, `Image: ${image}`);
 			} else if (isServiceUpdateTaskMeta(task.meta)) {
 				const updateMeta: ServiceUpdateTaskMeta = task.meta;
 				image = updateMeta.image;
-				taskType = 'service-update';
-				await this.appendLog(task.id, `Task type: Service Update`);
+				await this.appendLog(task.id, 'Task type: Service Update');
 				await this.appendLog(task.id, `Image: ${image}`);
 			} else {
 				await this.failTask(task.id, `Unknown task meta type for task ${task.id}`);
@@ -529,7 +546,7 @@ export class TaskService {
 			}
 
 			// Get service with application (including cluster), docker secrets, and env variables
-			await this.appendLog(task.id, `Loading service configuration...`);
+			await this.appendLog(task.id, 'Loading service configuration...');
 			const service = await this.prisma.service.findUnique({
 				where: { id: task.serviceId },
 				include: {
@@ -568,9 +585,9 @@ export class TaskService {
 			await this.appendLog(task.id, `Cluster: ${service.application.cluster.name}`);
 
 			// Load kubeconfig from database for the cluster
-			await this.appendLog(task.id, `Loading Kubernetes configuration...`);
+			await this.appendLog(task.id, 'Loading Kubernetes configuration...');
 			const { coreApi, appsApi, networkingApi } = await this.loadKubeConfig(service.application.cluster.id);
-			await this.appendLog(task.id, `✓ Kubernetes configuration loaded`);
+			await this.appendLog(task.id, '✓ Kubernetes configuration loaded');
 
 			const namespace = service.application.namespace;
 
@@ -582,16 +599,21 @@ export class TaskService {
 			if (service.dockerSecrets.length > 0) {
 				await this.appendLog(task.id, `Processing ${service.dockerSecrets.length} Docker secret(s)...`);
 				for (const { dockerSecret } of service.dockerSecrets) {
-					await this.createDockerSecret(coreApi, namespace, {
-						name: dockerSecret.name,
-						server: dockerSecret.server,
-						username: dockerSecret.username,
-						password: decrypt(dockerSecret.password),
-					}, task.id);
+					await this.createDockerSecret(
+						coreApi,
+						namespace,
+						{
+							name: dockerSecret.name,
+							server: dockerSecret.server,
+							username: dockerSecret.username,
+							password: decrypt(dockerSecret.password),
+						},
+						task.id,
+					);
 					imagePullSecrets.push(dockerSecret.name);
 				}
 			} else {
-				await this.appendLog(task.id, `No Docker secrets configured`);
+				await this.appendLog(task.id, 'No Docker secrets configured');
 			}
 
 			// Load and decrypt environment variables
@@ -614,48 +636,52 @@ export class TaskService {
 			}
 
 			// Create or update deployment
-			await this.appendLog(task.id, `Creating/updating deployment...`);
+			await this.appendLog(task.id, 'Creating/updating deployment...');
 			const deploymentName = toK8sName(service.name);
-			await this.createDeployment(appsApi, {
-				name: service.name,
-				namespace,
-				image,
-				replicas: service.replicas,
-				containerPort: service.containerPort,
-				imagePullSecrets,
-				env: envVars,
-				resources: {
-					cpuRequest: service.cpuRequest,
-					cpuLimit: service.cpuLimit,
-					memoryRequest: service.memoryRequest,
-					memoryLimit: service.memoryLimit,
+			await this.createDeployment(
+				appsApi,
+				{
+					name: service.name,
+					namespace,
+					image,
+					replicas: service.replicas,
+					containerPort: service.containerPort,
+					imagePullSecrets,
+					env: envVars,
+					resources: {
+						cpuRequest: service.cpuRequest,
+						cpuLimit: service.cpuLimit,
+						memoryRequest: service.memoryRequest,
+						memoryLimit: service.memoryLimit,
+					},
+					livenessProbe: service.livenessProbePath
+						? {
+								path: service.livenessProbePath,
+								initialDelaySeconds: service.livenessProbeInitialDelaySeconds,
+								periodSeconds: service.livenessProbePeriodSeconds,
+								timeoutSeconds: service.livenessProbeTimeoutSeconds,
+								successThreshold: service.livenessProbeSuccessThreshold,
+								failureThreshold: service.livenessProbeFailureThreshold,
+							}
+						: null,
+					readinessProbe: service.readinessProbePath
+						? {
+								path: service.readinessProbePath,
+								initialDelaySeconds: service.readinessProbeInitialDelaySeconds,
+								periodSeconds: service.readinessProbePeriodSeconds,
+								timeoutSeconds: service.readinessProbeTimeoutSeconds,
+								successThreshold: service.readinessProbeSuccessThreshold,
+								failureThreshold: service.readinessProbeFailureThreshold,
+							}
+						: null,
+					maxSurge: service.maxSurge,
+					maxUnavailable: service.maxUnavailable,
 				},
-				livenessProbe: service.livenessProbePath
-					? {
-							path: service.livenessProbePath,
-							initialDelaySeconds: service.livenessProbeInitialDelaySeconds,
-							periodSeconds: service.livenessProbePeriodSeconds,
-							timeoutSeconds: service.livenessProbeTimeoutSeconds,
-							successThreshold: service.livenessProbeSuccessThreshold,
-							failureThreshold: service.livenessProbeFailureThreshold,
-						}
-					: null,
-				readinessProbe: service.readinessProbePath
-					? {
-							path: service.readinessProbePath,
-							initialDelaySeconds: service.readinessProbeInitialDelaySeconds,
-							periodSeconds: service.readinessProbePeriodSeconds,
-							timeoutSeconds: service.readinessProbeTimeoutSeconds,
-							successThreshold: service.readinessProbeSuccessThreshold,
-							failureThreshold: service.readinessProbeFailureThreshold,
-						}
-					: null,
-				maxSurge: service.maxSurge,
-				maxUnavailable: service.maxUnavailable,
-			}, task.id);
+				task.id,
+			);
 
 			// Create Kubernetes Service (using the same deployment name for selector)
-			await this.appendLog(task.id, `Creating Kubernetes service...`);
+			await this.appendLog(task.id, 'Creating Kubernetes service...');
 			await this.createK8sService(
 				coreApi,
 				{
@@ -670,28 +696,32 @@ export class TaskService {
 			// Create Ingress if ingressUrl is defined
 			if (service.ingressUrl) {
 				try {
-					await this.appendLog(task.id, `Creating ingress...`);
+					await this.appendLog(task.id, 'Creating ingress...');
 					const url = new URL(service.ingressUrl);
 					const k8sServiceName = toK8sName(service.name);
-					await this.createIngress(networkingApi, {
-						name: service.name,
-						namespace,
-						host: url.hostname,
-						serviceName: k8sServiceName,
-						servicePort: service.containerPort,
-					}, task.id);
-				} catch (err) {
+					await this.createIngress(
+						networkingApi,
+						{
+							name: service.name,
+							namespace,
+							host: url.hostname,
+							serviceName: k8sServiceName,
+							servicePort: service.containerPort,
+						},
+						task.id,
+					);
+				} catch (_err) {
 					await this.appendLog(
 						task.id,
 						`✗ Warning: Failed to create ingress - invalid URL: ${service.ingressUrl}`,
 					);
 				}
 			} else {
-				await this.appendLog(task.id, `No ingress URL configured, skipping ingress creation`);
+				await this.appendLog(task.id, 'No ingress URL configured, skipping ingress creation');
 			}
 
 			// Mark task as done
-			await this.appendLog(task.id, `✓ Deployment completed successfully`);
+			await this.appendLog(task.id, '✓ Deployment completed successfully');
 			await this.prisma.task.update({
 				where: { id: task.id },
 				data: {

@@ -1,16 +1,13 @@
-import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import type { PrismaClient, Prisma } from '@prisma/client';
-import { deploySchema } from '../schemas/deploy.schema';
 import { createDeployTaskMeta } from '@jcloud/backend-shared';
+import type { Prisma, PrismaClient } from '@prisma/client';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { deploySchema } from '../schemas/deploy.schema';
 
 interface DeployRouteDependencies {
 	prisma: PrismaClient;
 }
 
-export function registerDeployRoute(
-	server: FastifyInstance,
-	deps: DeployRouteDependencies,
-) {
+export function registerDeployRoute(server: FastifyInstance, deps: DeployRouteDependencies) {
 	server.post('/deploy', async (request: FastifyRequest, reply: FastifyReply) => {
 		try {
 			// Get API key from header
@@ -19,7 +16,7 @@ export function registerDeployRoute(
 			if (!apiKey || typeof apiKey !== 'string') {
 				return reply.code(401).send({
 					error: 'Unauthorized',
-					message: 'Missing or invalid X-API-Key header'
+					message: 'Missing or invalid X-API-Key header',
 				});
 			}
 
@@ -32,7 +29,7 @@ export function registerDeployRoute(
 			if (!key) {
 				return reply.code(401).send({
 					error: 'Unauthorized',
-					message: 'Invalid API key'
+					message: 'Invalid API key',
 				});
 			}
 
@@ -80,14 +77,12 @@ export function registerDeployRoute(
 				deployedAt: deploy.createdAt,
 				message: 'Deployment recorded successfully',
 			});
-
 		} catch (error) {
 			server.log.error(error);
 			return reply.code(500).send({
 				error: 'Internal Server Error',
-				message: 'Failed to process deployment'
+				message: 'Failed to process deployment',
 			});
 		}
 	});
 }
-

@@ -1,6 +1,6 @@
-import { useState, useCallback } from 'react';
 import type { TablePaginationConfig } from 'antd/es/table';
-import type { SorterResult, FilterValue } from 'antd/es/table/interface';
+import type { FilterValue, SorterResult } from 'antd/es/table/interface';
+import { useCallback, useState } from 'react';
 
 /**
  * Custom hook for server-side table management with pagination and sorting.
@@ -95,9 +95,12 @@ export const useServerTable = <T extends Record<string, any>, F = any>(config?: 
 			if (!Array.isArray(sorter)) {
 				if (sorter.order) {
 					// Determine field name (prefer field, fallback to columnKey)
-					const field = sorter.field
-						? (Array.isArray(sorter.field) ? sorter.field.join('.') : String(sorter.field))
-						: String(sorter.columnKey);
+					let field: string;
+					if (sorter.field) {
+						field = Array.isArray(sorter.field) ? sorter.field.join('.') : String(sorter.field);
+					} else {
+						field = String(sorter.columnKey);
+					}
 					const order: SortOrder = sorter.order === 'ascend' ? 'asc' : 'desc';
 					setSortBy(field);
 					setSortOrder(order);
@@ -147,4 +150,3 @@ export const useServerTable = <T extends Record<string, any>, F = any>(config?: 
 		reset,
 	};
 };
-

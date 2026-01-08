@@ -3,17 +3,12 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
 import type { FastifyInstance } from 'fastify';
 import Fastify from 'fastify';
-import { z } from 'zod';
 import { TaskService } from './task.service';
 
 interface ServerOptions {
 	port: number;
 	appName: string;
 }
-
-const deploySchema = z.object({
-	image: z.string().min(1),
-});
 
 export class Server {
 	private server: FastifyInstance;
@@ -40,7 +35,9 @@ export class Server {
 				where: { status: 'WAITING' },
 				orderBy: { createdAt: 'asc' },
 			});
-			if (!task) return;
+			if (!task) {
+				return;
+			}
 			await this.taskService.run(task);
 		} finally {
 			setTimeout(() => this.tick(), 1000);

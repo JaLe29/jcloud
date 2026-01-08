@@ -1,10 +1,20 @@
-import { useState, useEffect } from 'react';
-import { Layout as AntLayout, Menu, Typography, Button, Select, Tag } from 'antd';
-import { AppstoreOutlined, HomeOutlined, MenuOutlined, LockOutlined, KeyOutlined, ClusterOutlined, ExclamationCircleOutlined, RocketOutlined, UnorderedListOutlined } from '@ant-design/icons';
+import {
+	AppstoreOutlined,
+	ClusterOutlined,
+	ExclamationCircleOutlined,
+	HomeOutlined,
+	KeyOutlined,
+	LockOutlined,
+	MenuOutlined,
+	RocketOutlined,
+	UnorderedListOutlined,
+} from '@ant-design/icons';
+import { Layout as AntLayout, Button, Menu, Select, Tag, Typography } from 'antd';
 import type React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { trpc } from '../utils/trpc';
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useClusterStore } from '../stores/clusterStore';
+import { trpc } from '../utils/trpc';
 
 const { Header, Sider, Content } = AntLayout;
 const { Text } = Typography;
@@ -80,11 +90,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 		return location.pathname;
 	};
 
-
 	// Validate that the selected cluster (loaded from localStorage by persist middleware) still exists
 	useEffect(() => {
 		if (selectedClusterId && clusters) {
-			const clusterExists = clusters.some((c) => c.id === selectedClusterId);
+			const clusterExists = clusters.some(c => c.id === selectedClusterId);
 			if (!clusterExists) {
 				// Cluster was deleted, clear selection
 				setSelectedClusterId(null);
@@ -105,7 +114,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 				breakpoint="lg"
 				collapsedWidth="0"
 				collapsed={collapsed}
-				onCollapse={(value) => setCollapsed(value)}
+				onCollapse={value => setCollapsed(value)}
 				width={220}
 				style={{
 					overflow: 'auto',
@@ -127,9 +136,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 						borderBottom: '1px solid #f0f0f0',
 					}}
 				>
-					<Text style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.5px' }}>
-						JCloud
-					</Text>
+					<Text style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.5px' }}>JCloud</Text>
 				</div>
 				<Menu
 					mode="inline"
@@ -153,11 +160,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 					}}
 				>
 					<div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-						<Button
-							type="text"
-							icon={<MenuOutlined />}
-							onClick={() => setCollapsed(!collapsed)}
-						/>
+						<Button type="text" icon={<MenuOutlined />} onClick={() => setCollapsed(!collapsed)} />
 					</div>
 					<div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
 						{clusters && clusters.length > 0 ? (
@@ -166,7 +169,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 								onChange={setSelectedClusterId}
 								placeholder="Select cluster"
 								style={{ minWidth: 200 }}
-								options={clusters.map((cluster) => ({
+								options={clusters.map(cluster => ({
 									label: cluster.name,
 									value: cluster.id,
 								}))}
@@ -183,9 +186,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 						)}
 					</div>
 				</Header>
-				<Content style={{ padding: 24 }}>
-					{children}
-				</Content>
+				<Content style={{ padding: 24 }}>{children}</Content>
 			</AntLayout>
 		</AntLayout>
 	);

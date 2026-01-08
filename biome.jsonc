@@ -338,6 +338,16 @@
 					}
 				}
 			}
+		},
+		{
+			"includes": ["**/prisma.config.ts"],
+			"linter": {
+				"rules": {
+					"style": {
+						"noDefaultExport": "off"
+					}
+				}
+			}
 		}
 	]
 }

@@ -45,7 +45,7 @@ export function decrypt(encryptedText: string): string {
 		if (encryptedText.length < minLength) {
 			throw new Error(
 				`Encrypted text is too short (${encryptedText.length} bytes, expected at least ${minLength} bytes). ` +
-				'This might indicate corrupted data or incorrect format.'
+					'This might indicate corrupted data or incorrect format.',
 			);
 		}
 
@@ -71,22 +71,20 @@ export function decrypt(encryptedText: string): string {
 		return decrypted;
 	} catch (error) {
 		const errorMessage = error instanceof Error ? error.message : String(error);
-		const isKeyError = errorMessage.includes('bad decrypt') || errorMessage.includes('Unsupported state') || errorMessage.includes('Invalid authentication tag');
+		const isKeyError =
+			errorMessage.includes('bad decrypt') ||
+			errorMessage.includes('Unsupported state') ||
+			errorMessage.includes('Invalid authentication tag');
 
 		if (isKeyError) {
 			throw new Error(
 				'Failed to decrypt data. This is likely caused by an incorrect ENCRYPTION_KEY. ' +
-				'Make sure the ENCRYPTION_KEY environment variable matches the key used to encrypt the data. ' +
-				`Original error: ${errorMessage}`,
-				{ cause: error }
+					'Make sure the ENCRYPTION_KEY environment variable matches the key used to encrypt the data. ' +
+					`Original error: ${errorMessage}`,
+				{ cause: error },
 			);
 		}
 
-		throw new Error(
-			`Failed to decrypt data: ${errorMessage}`,
-			{ cause: error }
-		);
+		throw new Error(`Failed to decrypt data: ${errorMessage}`, { cause: error });
 	}
 }
-
-

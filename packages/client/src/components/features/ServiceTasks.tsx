@@ -1,12 +1,18 @@
+import {
+	CheckCircleOutlined,
+	ClockCircleOutlined,
+	CloseCircleOutlined,
+	EyeOutlined,
+	SyncOutlined,
+} from '@ant-design/icons';
+import type { AppRouter } from '@jcloud/bff/src/trpc/router';
+import type { inferRouterOutputs } from '@trpc/server';
+import { Button, Card, Space, Table, Tag, Typography } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import dayjs from 'dayjs';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, Table, Typography, Space, Tag, Button } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import { EyeOutlined, ClockCircleOutlined, SyncOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
-import dayjs from 'dayjs';
 import { trpc } from '../../utils/trpc';
-import type { inferRouterOutputs } from '@trpc/server';
-import type { AppRouter } from '@jcloud/bff/src/trpc/router';
 
 const { Text } = Typography;
 
@@ -39,9 +45,13 @@ export const ServiceTasks = ({ serviceId }: ServiceTasksProps) => {
 	});
 
 	const getTaskType = (meta: Record<string, unknown> | null): string => {
-		if (!meta) return 'Unknown';
+		if (!meta) {
+			return 'Unknown';
+		}
 		const type = meta.type as string | undefined;
-		if (type === 'deploy-created') return 'Deployment';
+		if (type === 'deploy-created') {
+			return 'Deployment';
+		}
 		return type || 'Unknown';
 	};
 
@@ -74,16 +84,16 @@ export const ServiceTasks = ({ serviceId }: ServiceTasksProps) => {
 			dataIndex: 'createdAt',
 			key: 'createdAt',
 			width: 160,
-			render: (date: Date) => (
-				<Text style={{ fontSize: 12 }}>{dayjs(date).format('DD.MM.YYYY HH:mm:ss')}</Text>
-			),
+			render: (date: Date) => <Text style={{ fontSize: 12 }}>{dayjs(date).format('DD.MM.YYYY HH:mm:ss')}</Text>,
 		},
 		{
 			title: 'Duration',
 			key: 'duration',
 			width: 100,
 			render: (_: unknown, record: TaskData) => {
-				if (!record.startedAt) return <Text type="secondary">-</Text>;
+				if (!record.startedAt) {
+					return <Text type="secondary">-</Text>;
+				}
 				const end = record.finishedAt ? dayjs(record.finishedAt) : dayjs();
 				const duration = end.diff(dayjs(record.startedAt), 'second');
 				return <Text style={{ fontSize: 12 }}>{duration}s</Text>;
@@ -116,7 +126,7 @@ export const ServiceTasks = ({ serviceId }: ServiceTasksProps) => {
 					total: data?.pagination?.total || 0,
 					pageSize: 10,
 					showSizeChanger: false,
-					showTotal: (total) => `${total} task${total !== 1 ? 's' : ''}`,
+					showTotal: total => `${total} task${total !== 1 ? 's' : ''}`,
 					onChange: setPage,
 				}}
 				locale={{

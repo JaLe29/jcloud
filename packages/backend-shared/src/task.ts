@@ -70,4 +70,3 @@ export function getTaskTypeLabel(type: string): string {
 			return type;
 	}
 }
-

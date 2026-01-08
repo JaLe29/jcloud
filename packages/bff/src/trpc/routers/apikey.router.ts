@@ -1,9 +1,9 @@
-import { TRPCError } from '@trpc/server';
-import type { Prisma } from '@prisma/client';
 import crypto from 'node:crypto';
+import type { Prisma } from '@prisma/client';
+import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
+import { createPaginationInputSchema, getPaginationMeta, getPaginationParams } from '../../utils/pagination';
 import type { Procedure, Router } from '../router';
-import { getPaginationMeta, getPaginationParams, createPaginationInputSchema } from '../../utils/pagination';
 
 function generateApiKey(): string {
 	// Generate a secure random API key (32 bytes = 64 hex characters)
@@ -17,102 +17,94 @@ const deployPaginationSchema = createPaginationInputSchema(
 
 export const apikeyRouter = (router: Router, procedure: Procedure) => {
 	return router({
-		getByServiceId: procedure
-			.input(z.object({ serviceId: z.string().uuid() }))
-			.query(async ({ ctx, input }) => {
-				const apiKey = await ctx.prisma.apiKey.findUnique({
-					where: { serviceId: input.serviceId },
+		getByServiceId: procedure.input(z.object({ serviceId: z.string().uuid() })).query(async ({ ctx, input }) => {
+			const apiKey = await ctx.prisma.apiKey.findUnique({
+				where: { serviceId: input.serviceId },
+			});
+
+			return apiKey;
+		}),
+
+		generate: procedure.input(z.object({ serviceId: z.string().uuid() })).mutation(async ({ ctx, input }) => {
+			// Check if service exists
+			const service = await ctx.prisma.service.findUnique({
+				where: { id: input.serviceId },
+			});
+
+			if (!service) {
+				throw new TRPCError({
+					code: 'NOT_FOUND',
+					message: 'Service not found',
 				});
+			}
 
-				return apiKey;
-			}),
+			// Check if API key already exists
+			const existing = await ctx.prisma.apiKey.findUnique({
+				where: { serviceId: input.serviceId },
+			});
 
-		generate: procedure
-			.input(z.object({ serviceId: z.string().uuid() }))
-			.mutation(async ({ ctx, input }) => {
-				// Check if service exists
-				const service = await ctx.prisma.service.findUnique({
-					where: { id: input.serviceId },
+			if (existing) {
+				throw new TRPCError({
+					code: 'CONFLICT',
+					message: 'API key already exists for this service. Use regenerate to create a new one.',
 				});
+			}
 
-				if (!service) {
-					throw new TRPCError({
-						code: 'NOT_FOUND',
-						message: 'Service not found',
-					});
-				}
+			// Generate new API key
+			const key = generateApiKey();
 
-				// Check if API key already exists
-				const existing = await ctx.prisma.apiKey.findUnique({
-					where: { serviceId: input.serviceId },
+			const apiKey = await ctx.prisma.apiKey.create({
+				data: {
+					serviceId: input.serviceId,
+					key,
+				},
+			});
+
+			return apiKey;
+		}),
+
+		regenerate: procedure.input(z.object({ serviceId: z.string().uuid() })).mutation(async ({ ctx, input }) => {
+			// Check if API key exists
+			const existing = await ctx.prisma.apiKey.findUnique({
+				where: { serviceId: input.serviceId },
+			});
+
+			if (!existing) {
+				throw new TRPCError({
+					code: 'NOT_FOUND',
+					message: 'API key not found for this service',
 				});
+			}
 
-				if (existing) {
-					throw new TRPCError({
-						code: 'CONFLICT',
-						message: 'API key already exists for this service. Use regenerate to create a new one.',
-					});
-				}
+			// Generate new API key
+			const key = generateApiKey();
 
-				// Generate new API key
-				const key = generateApiKey();
+			const apiKey = await ctx.prisma.apiKey.update({
+				where: { serviceId: input.serviceId },
+				data: { key },
+			});
 
-				const apiKey = await ctx.prisma.apiKey.create({
-					data: {
-						serviceId: input.serviceId,
-						key,
-					},
+			return apiKey;
+		}),
+
+		delete: procedure.input(z.object({ serviceId: z.string().uuid() })).mutation(async ({ ctx, input }) => {
+			const existing = await ctx.prisma.apiKey.findUnique({
+				where: { serviceId: input.serviceId },
+			});
+
+			if (!existing) {
+				throw new TRPCError({
+					code: 'NOT_FOUND',
+					message: 'API key not found',
 				});
+			}
 
-				return apiKey;
-			}),
+			await ctx.prisma.apiKey.delete({
+				where: { serviceId: input.serviceId },
+			});
 
-		regenerate: procedure
-			.input(z.object({ serviceId: z.string().uuid() }))
-			.mutation(async ({ ctx, input }) => {
-				// Check if API key exists
-				const existing = await ctx.prisma.apiKey.findUnique({
-					where: { serviceId: input.serviceId },
-				});
-
-				if (!existing) {
-					throw new TRPCError({
-						code: 'NOT_FOUND',
-						message: 'API key not found for this service',
-					});
-				}
-
-				// Generate new API key
-				const key = generateApiKey();
-
-				const apiKey = await ctx.prisma.apiKey.update({
-					where: { serviceId: input.serviceId },
-					data: { key },
-				});
-
-				return apiKey;
-			}),
-
-		delete: procedure
-			.input(z.object({ serviceId: z.string().uuid() }))
-			.mutation(async ({ ctx, input }) => {
-				const existing = await ctx.prisma.apiKey.findUnique({
-					where: { serviceId: input.serviceId },
-				});
-
-				if (!existing) {
-					throw new TRPCError({
-						code: 'NOT_FOUND',
-						message: 'API key not found',
-					});
-				}
-
-				await ctx.prisma.apiKey.delete({
-					where: { serviceId: input.serviceId },
-				});
-
-				return { success: true };
-			}),
+			return { success: true };
+		}),
 
 		recordDeploy: procedure
 			.input(
@@ -145,48 +137,45 @@ export const apikeyRouter = (router: Router, procedure: Procedure) => {
 				return deploy;
 			}),
 
-		getDeployHistory: procedure
-			.input(deployPaginationSchema)
-			.query(async ({ ctx, input }) => {
-				const { page, limit, skip, take } = getPaginationParams(input);
+		getDeployHistory: procedure.input(deployPaginationSchema).query(async ({ ctx, input }) => {
+			const { page, limit, skip, take } = getPaginationParams(input);
 
-				if (!input?.filter?.serviceId) {
-					throw new TRPCError({
-						code: 'BAD_REQUEST',
-						message: 'serviceId is required',
-					});
-				}
-
-				// Get API key for this service
-				const apiKey = await ctx.prisma.apiKey.findUnique({
-					where: { serviceId: input.filter.serviceId },
+			if (!input?.filter?.serviceId) {
+				throw new TRPCError({
+					code: 'BAD_REQUEST',
+					message: 'serviceId is required',
 				});
+			}
 
-				if (!apiKey) {
-					return {
-						deploys: [],
-						pagination: getPaginationMeta(page, limit, 0),
-					};
-				}
+			// Get API key for this service
+			const apiKey = await ctx.prisma.apiKey.findUnique({
+				where: { serviceId: input.filter.serviceId },
+			});
 
-				const where: Prisma.ApiDeployWhereInput = {
-					apiKeyId: apiKey.id,
-				};
-
-				const total = await ctx.prisma.apiDeploy.count({ where });
-
-				const deploys = await ctx.prisma.apiDeploy.findMany({
-					where,
-					skip,
-					take,
-					orderBy: { createdAt: 'desc' },
-				});
-
+			if (!apiKey) {
 				return {
-					deploys,
-					pagination: getPaginationMeta(page, limit, total),
+					deploys: [],
+					pagination: getPaginationMeta(page, limit, 0),
 				};
-			}),
+			}
+
+			const where: Prisma.ApiDeployWhereInput = {
+				apiKeyId: apiKey.id,
+			};
+
+			const total = await ctx.prisma.apiDeploy.count({ where });
+
+			const deploys = await ctx.prisma.apiDeploy.findMany({
+				where,
+				skip,
+				take,
+				orderBy: { createdAt: 'desc' },
+			});
+
+			return {
+				deploys,
+				pagination: getPaginationMeta(page, limit, total),
+			};
+		}),
 	});
 };
-

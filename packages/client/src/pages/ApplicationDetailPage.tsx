@@ -1,15 +1,15 @@
-import { useNavigate, useParams } from 'react-router-dom';
-import { Card, Typography, Space, Button, Table, Tag, Modal, message, Descriptions, Tooltip } from 'antd';
 import {
 	ArrowLeftOutlined,
 	DeleteOutlined,
 	EditOutlined,
-	PlusOutlined,
 	LinkOutlined,
 	LockOutlined,
+	PlusOutlined,
 } from '@ant-design/icons';
+import { Button, Card, Descriptions, Modal, message, Space, Table, Tag, Tooltip, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
+import { useNavigate, useParams } from 'react-router-dom';
 import { trpc } from '../utils/trpc';
 
 const { Title, Text } = Typography;
@@ -36,7 +36,11 @@ export const ApplicationDetailPage = () => {
 	const navigate = useNavigate();
 	const utils = trpc.useUtils();
 
-	const { data: application, isLoading, error } = trpc.application.getById.useQuery(
+	const {
+		data: application,
+		isLoading,
+		error,
+	} = trpc.application.getById.useQuery(
 		{ id: id! },
 		{
 			enabled: !!id,
@@ -50,7 +54,7 @@ export const ApplicationDetailPage = () => {
 			utils.application.list.invalidate();
 			navigate('/applications');
 		},
-		onError: (error) => {
+		onError: error => {
 			message.error(error.message);
 		},
 	});
@@ -60,7 +64,7 @@ export const ApplicationDetailPage = () => {
 			message.success('Service deleted');
 			utils.application.getById.invalidate({ id: id! });
 		},
-		onError: (error) => {
+		onError: error => {
 			message.error(error.message);
 		},
 	});
@@ -72,7 +76,9 @@ export const ApplicationDetailPage = () => {
 			okText: 'Delete',
 			okType: 'danger',
 			onOk: () => {
-				if (id) deleteApplicationMutation.mutate({ id });
+				if (id) {
+					deleteApplicationMutation.mutate({ id });
+				}
 			},
 		});
 	};
@@ -87,7 +93,9 @@ export const ApplicationDetailPage = () => {
 	};
 
 	const formatResources = (request: number | null, limit: number | null, unit: string) => {
-		if (!request && !limit) return '-';
+		if (!request && !limit) {
+			return '-';
+		}
 		return `${request ?? '-'} / ${limit ?? '-'} ${unit}`;
 	};
 
@@ -104,7 +112,7 @@ export const ApplicationDetailPage = () => {
 							href={record.ingressUrl}
 							target="_blank"
 							rel="noopener noreferrer"
-							onClick={(e) => e.stopPropagation()}
+							onClick={e => e.stopPropagation()}
 							style={{ fontSize: 12 }}
 						>
 							<LinkOutlined /> {record.ingressUrl}
@@ -152,11 +160,7 @@ export const ApplicationDetailPage = () => {
 			align: 'center',
 			render: (_, record) => {
 				const count = record.envs?.length ?? 0;
-				return count > 0 ? (
-					<Tag icon={<LockOutlined />}>{count}</Tag>
-				) : (
-					<Text type="secondary">-</Text>
-				);
+				return count > 0 ? <Tag icon={<LockOutlined />}>{count}</Tag> : <Text type="secondary">-</Text>;
 			},
 		},
 		{
@@ -182,7 +186,7 @@ export const ApplicationDetailPage = () => {
 						type="text"
 						size="small"
 						icon={<EditOutlined />}
-						onClick={(e) => {
+						onClick={e => {
 							e.stopPropagation();
 							navigate(`/applications/${id}/services/${record.id}/edit`);
 						}}
@@ -192,7 +196,7 @@ export const ApplicationDetailPage = () => {
 						size="small"
 						danger
 						icon={<DeleteOutlined />}
-						onClick={(e) => {
+						onClick={e => {
 							e.stopPropagation();
 							handleDeleteService(record.id, record.name);
 						}}
@@ -220,7 +224,9 @@ export const ApplicationDetailPage = () => {
 	if (isLoading || !application) {
 		return (
 			<Space direction="vertical" size="large" style={{ width: '100%' }}>
-				<Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>Back</Button>
+				<Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
+					Back
+				</Button>
 				<Card loading />
 			</Space>
 		);
@@ -243,11 +249,11 @@ export const ApplicationDetailPage = () => {
 	const formatResourceDisplay = (request: number, limit: number, unit: string) => {
 		const hasRequest = request > 0;
 		const hasLimit = limit > 0;
-		
+
 		if (!hasRequest && !hasLimit) {
 			return 'Not set';
 		}
-		
+
 		const requestStr = hasRequest ? request.toString() : '-';
 		const limitStr = hasLimit ? limit.toString() : '-';
 		return `${requestStr} / ${limitStr} ${unit}`;
@@ -258,22 +264,28 @@ export const ApplicationDetailPage = () => {
 
 	return (
 		<Space direction="vertical" size="large" style={{ width: '100%' }}>
-			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+			<div
+				style={{
+					display: 'flex',
+					justifyContent: 'space-between',
+					alignItems: 'center',
+					flexWrap: 'wrap',
+					gap: 16,
+				}}
+			>
 				<Space wrap>
 					<Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/applications')}>
 						Back
 					</Button>
-					<Title level={2} style={{ margin: 0 }}>{application.name}</Title>
+					<Title level={2} style={{ margin: 0 }}>
+						{application.name}
+					</Title>
 					<Tag>{application.namespace}</Tag>
 					<Tooltip title="CPU Request / Limit">
-						<Tag color="blue">
-							CPU: {cpuDisplay}
-						</Tag>
+						<Tag color="blue">CPU: {cpuDisplay}</Tag>
 					</Tooltip>
 					<Tooltip title="Memory Request / Limit">
-						<Tag color="green">
-							Memory: {memoryDisplay}
-						</Tag>
+						<Tag color="green">Memory: {memoryDisplay}</Tag>
 					</Tooltip>
 				</Space>
 				<Space>
@@ -295,8 +307,12 @@ export const ApplicationDetailPage = () => {
 				<Descriptions column={{ xs: 1, sm: 2, md: 4 }}>
 					<Descriptions.Item label="Namespace">{application.namespace}</Descriptions.Item>
 					<Descriptions.Item label="Services">{application._count.services}</Descriptions.Item>
-					<Descriptions.Item label="Created">{dayjs(application.createdAt).format('DD.MM.YYYY HH:mm')}</Descriptions.Item>
-					<Descriptions.Item label="Updated">{dayjs(application.updatedAt).format('DD.MM.YYYY HH:mm')}</Descriptions.Item>
+					<Descriptions.Item label="Created">
+						{dayjs(application.createdAt).format('DD.MM.YYYY HH:mm')}
+					</Descriptions.Item>
+					<Descriptions.Item label="Updated">
+						{dayjs(application.updatedAt).format('DD.MM.YYYY HH:mm')}
+					</Descriptions.Item>
 				</Descriptions>
 			</Card>
 
@@ -318,7 +334,7 @@ export const ApplicationDetailPage = () => {
 					rowKey="id"
 					pagination={false}
 					scroll={{ x: 700 }}
-					onRow={(record) => ({
+					onRow={record => ({
 						onClick: () => navigate(`/applications/${id}/services/${record.id}`),
 						style: { cursor: 'pointer' },
 					})}

@@ -1,5 +1,5 @@
-import { Typography, Space, Button, message, Input, Modal } from 'antd';
-import { ReloadOutlined, DeleteOutlined, CopyOutlined, PlusOutlined } from '@ant-design/icons';
+import { CopyOutlined, DeleteOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Button, Input, Modal, message, Space, Typography } from 'antd';
 import { useState } from 'react';
 import { trpc } from '../../utils/trpc';
 
@@ -21,7 +21,7 @@ export const ServiceApiKey = ({ serviceId }: ServiceApiKeyProps) => {
 			utils.apikey.getByServiceId.invalidate({ serviceId });
 			setShowKey(true);
 		},
-		onError: (error) => message.error(error.message),
+		onError: error => message.error(error.message),
 	});
 
 	const regenerateMutation = trpc.apikey.regenerate.useMutation({
@@ -30,7 +30,7 @@ export const ServiceApiKey = ({ serviceId }: ServiceApiKeyProps) => {
 			utils.apikey.getByServiceId.invalidate({ serviceId });
 			setShowKey(true);
 		},
-		onError: (error) => message.error(error.message),
+		onError: error => message.error(error.message),
 	});
 
 	const deleteMutation = trpc.apikey.delete.useMutation({
@@ -39,7 +39,7 @@ export const ServiceApiKey = ({ serviceId }: ServiceApiKeyProps) => {
 			utils.apikey.getByServiceId.invalidate({ serviceId });
 			setShowKey(false);
 		},
-		onError: (error) => message.error(error.message),
+		onError: error => message.error(error.message),
 	});
 
 	const handleCopyKey = () => {
@@ -94,19 +94,10 @@ export const ServiceApiKey = ({ serviceId }: ServiceApiKeyProps) => {
 			<Space style={{ width: '100%', justifyContent: 'space-between' }}>
 				<Text>Use this key for CI/CD deployments</Text>
 				<Space>
-					<Button
-						icon={<ReloadOutlined />}
-						onClick={handleRegenerate}
-						loading={regenerateMutation.isPending}
-					>
+					<Button icon={<ReloadOutlined />} onClick={handleRegenerate} loading={regenerateMutation.isPending}>
 						Regenerate
 					</Button>
-					<Button
-						danger
-						icon={<DeleteOutlined />}
-						onClick={handleDelete}
-						loading={deleteMutation.isPending}
-					>
+					<Button danger icon={<DeleteOutlined />} onClick={handleDelete} loading={deleteMutation.isPending}>
 						Delete
 					</Button>
 				</Space>
@@ -133,4 +124,3 @@ export const ServiceApiKey = ({ serviceId }: ServiceApiKeyProps) => {
 		</Space>
 	);
 };
-

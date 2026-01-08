@@ -1,8 +1,8 @@
-import { Table, Typography, Space, Alert, Card, Button, Modal, Form, Input, message, Select } from 'antd';
-import { PlusOutlined, DeleteOutlined, EditOutlined, LockOutlined } from '@ant-design/icons';
+import { DeleteOutlined, EditOutlined, LockOutlined, PlusOutlined } from '@ant-design/icons';
+import { Alert, Button, Card, Form, Input, Modal, message, Select, Space, Table, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { trpc } from '../utils/trpc';
 
 const { Title, Text } = Typography;
@@ -51,7 +51,7 @@ export const DockerSecretsPage = () => {
 		{
 			enabled: !!editingSecret,
 			retry: false,
-			onError: (error) => {
+			onError: error => {
 				message.error(error.message);
 				closeModal();
 			},
@@ -64,7 +64,7 @@ export const DockerSecretsPage = () => {
 			utils.dockerSecret.list.invalidate();
 			closeModal();
 		},
-		onError: (error) => message.error(error.message),
+		onError: error => message.error(error.message),
 	});
 
 	const updateMutation = trpc.dockerSecret.update.useMutation({
@@ -73,7 +73,7 @@ export const DockerSecretsPage = () => {
 			utils.dockerSecret.list.invalidate();
 			closeModal();
 		},
-		onError: (error) => message.error(error.message),
+		onError: error => message.error(error.message),
 	});
 
 	const deleteMutation = trpc.dockerSecret.delete.useMutation({
@@ -81,21 +81,23 @@ export const DockerSecretsPage = () => {
 			message.success('Docker secret deleted');
 			utils.dockerSecret.list.invalidate();
 		},
-		onError: (error) => message.error(error.message),
+		onError: error => message.error(error.message),
 	});
 
 	const assignMutation = trpc.dockerSecret.assignToServices.useMutation({
-		onError: (error) => message.error(error.message),
+		onError: error => message.error(error.message),
 	});
 
-	const serviceOptions = useMemo(() =>
-		applicationsData?.applications.flatMap((app) =>
-			app.services.map((service) => ({
-				label: `${app.name} / ${service.name}`,
-				value: service.id,
-			})),
-		) || [],
-	[applicationsData]);
+	const serviceOptions = useMemo(
+		() =>
+			applicationsData?.applications.flatMap(app =>
+				app.services.map(service => ({
+					label: `${app.name} / ${service.name}`,
+					value: service.id,
+				})),
+			) || [],
+		[applicationsData],
+	);
 
 	const openCreateModal = () => {
 		setEditingSecret(null);
@@ -153,7 +155,7 @@ export const DockerSecretsPage = () => {
 			message.success(`Docker secret ${editingSecret ? 'updated' : 'created'}`);
 			utils.dockerSecret.list.invalidate();
 			closeModal();
-		} catch (error) {
+		} catch (_error) {
 			// Error already handled by mutations
 		}
 	};
@@ -201,18 +203,14 @@ export const DockerSecretsPage = () => {
 			key: 'services',
 			width: 100,
 			align: 'center',
-			render: (_, record) => (
-				<Text>{record._count.services}</Text>
-			),
+			render: (_, record) => <Text>{record._count.services}</Text>,
 		},
 		{
 			title: 'Updated',
 			dataIndex: 'updatedAt',
 			key: 'updatedAt',
 			width: 140,
-			render: (date: Date) => (
-				<Text type="secondary">{dayjs(date).format('DD.MM.YYYY HH:mm')}</Text>
-			),
+			render: (date: Date) => <Text type="secondary">{dayjs(date).format('DD.MM.YYYY HH:mm')}</Text>,
 		},
 		{
 			title: '',
@@ -220,12 +218,7 @@ export const DockerSecretsPage = () => {
 			width: 80,
 			render: (_, record) => (
 				<Space>
-					<Button
-						type="text"
-						size="small"
-						icon={<EditOutlined />}
-						onClick={() => openEditModal(record)}
-					/>
+					<Button type="text" size="small" icon={<EditOutlined />} onClick={() => openEditModal(record)} />
 					<Button
 						type="text"
 						size="small"
@@ -244,9 +237,19 @@ export const DockerSecretsPage = () => {
 
 	return (
 		<Space direction="vertical" size="large" style={{ width: '100%' }}>
-			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+			<div
+				style={{
+					display: 'flex',
+					justifyContent: 'space-between',
+					alignItems: 'flex-start',
+					flexWrap: 'wrap',
+					gap: 16,
+				}}
+			>
 				<div>
-					<Title level={2} style={{ marginBottom: 4 }}>Docker Registry Secrets</Title>
+					<Title level={2} style={{ marginBottom: 4 }}>
+						Docker Registry Secrets
+					</Title>
 					{secrets && (
 						<Text type="secondary">
 							{secrets.length} secret{secrets.length !== 1 ? 's' : ''}
@@ -254,11 +257,7 @@ export const DockerSecretsPage = () => {
 					)}
 				</div>
 
-				<Button
-					type="primary"
-					icon={<PlusOutlined />}
-					onClick={openCreateModal}
-				>
+				<Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
 					New Secret
 				</Button>
 			</div>
@@ -287,27 +286,15 @@ export const DockerSecretsPage = () => {
 					requiredMark={false}
 					style={{ marginTop: 24 }}
 				>
-					<Form.Item
-						label="Name"
-						name="name"
-						rules={[{ required: true, message: 'Required' }]}
-					>
+					<Form.Item label="Name" name="name" rules={[{ required: true, message: 'Required' }]}>
 						<Input placeholder="my-registry-secret" />
 					</Form.Item>
 
-					<Form.Item
-						label="Registry Server"
-						name="server"
-						rules={[{ required: true, message: 'Required' }]}
-					>
+					<Form.Item label="Registry Server" name="server" rules={[{ required: true, message: 'Required' }]}>
 						<Input placeholder="docker.io" />
 					</Form.Item>
 
-					<Form.Item
-						label="Username"
-						name="username"
-						rules={[{ required: true, message: 'Required' }]}
-					>
+					<Form.Item label="Username" name="username" rules={[{ required: true, message: 'Required' }]}>
 						<Input placeholder="username" />
 					</Form.Item>
 
@@ -316,13 +303,12 @@ export const DockerSecretsPage = () => {
 						name="password"
 						rules={[{ required: !editingSecret, message: 'Required' }]}
 					>
-						<Input.Password placeholder={editingSecret ? 'Leave empty to keep current' : 'Enter password'} />
+						<Input.Password
+							placeholder={editingSecret ? 'Leave empty to keep current' : 'Enter password'}
+						/>
 					</Form.Item>
 
-					<Form.Item
-						label="Assign to Services"
-						name="serviceIds"
-					>
+					<Form.Item label="Assign to Services" name="serviceIds">
 						<Select
 							mode="multiple"
 							placeholder="Select services that need this secret"
@@ -337,7 +323,9 @@ export const DockerSecretsPage = () => {
 							<Button
 								type="primary"
 								htmlType="submit"
-								loading={createMutation.isPending || updateMutation.isPending || assignMutation.isPending}
+								loading={
+									createMutation.isPending || updateMutation.isPending || assignMutation.isPending
+								}
 							>
 								{editingSecret ? 'Save' : 'Create'}
 							</Button>
@@ -349,4 +337,3 @@ export const DockerSecretsPage = () => {
 		</Space>
 	);
 };
-

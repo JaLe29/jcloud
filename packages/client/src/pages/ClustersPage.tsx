@@ -1,8 +1,8 @@
-import { Table, Typography, Space, Alert, Card, Button, Modal, Form, Input, message } from 'antd';
-import { PlusOutlined, DeleteOutlined, EditOutlined, LockOutlined } from '@ant-design/icons';
+import { DeleteOutlined, EditOutlined, LockOutlined, PlusOutlined } from '@ant-design/icons';
+import { Alert, Button, Card, Form, Input, Modal, message, Space, Table, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { trpc } from '../utils/trpc';
 
 const { Title, Text } = Typography;
@@ -38,7 +38,7 @@ export const ClustersPage = () => {
 		{
 			enabled: !!editingCluster,
 			retry: false,
-			onError: (error) => {
+			onError: error => {
 				message.error(error.message);
 				closeModal();
 			},
@@ -51,7 +51,7 @@ export const ClustersPage = () => {
 			utils.cluster.list.invalidate();
 			closeModal();
 		},
-		onError: (error) => message.error(error.message),
+		onError: error => message.error(error.message),
 	});
 
 	const updateMutation = trpc.cluster.update.useMutation({
@@ -60,7 +60,7 @@ export const ClustersPage = () => {
 			utils.cluster.list.invalidate();
 			closeModal();
 		},
-		onError: (error) => message.error(error.message),
+		onError: error => message.error(error.message),
 	});
 
 	const deleteMutation = trpc.cluster.delete.useMutation({
@@ -68,7 +68,7 @@ export const ClustersPage = () => {
 			message.success('Cluster deleted');
 			utils.cluster.list.invalidate();
 		},
-		onError: (error) => message.error(error.message),
+		onError: error => message.error(error.message),
 	});
 
 	const openCreateModal = () => {
@@ -111,9 +111,10 @@ export const ClustersPage = () => {
 	const handleDelete = (cluster: ClusterData) => {
 		Modal.confirm({
 			title: `Delete "${cluster.name}"?`,
-			content: cluster._count.applications > 0
-				? `This cluster has ${cluster._count.applications} application(s). You must delete all applications first.`
-				: 'This action cannot be undone.',
+			content:
+				cluster._count.applications > 0
+					? `This cluster has ${cluster._count.applications} application(s). You must delete all applications first.`
+					: 'This action cannot be undone.',
 			okText: 'Delete',
 			okType: 'danger',
 			okButtonProps: {
@@ -145,18 +146,14 @@ export const ClustersPage = () => {
 			key: 'applications',
 			width: 120,
 			align: 'center',
-			render: (_, record) => (
-				<Text>{record._count.applications}</Text>
-			),
+			render: (_, record) => <Text>{record._count.applications}</Text>,
 		},
 		{
 			title: 'Updated',
 			dataIndex: 'updatedAt',
 			key: 'updatedAt',
 			width: 140,
-			render: (date: Date) => (
-				<Text type="secondary">{dayjs(date).format('DD.MM.YYYY HH:mm')}</Text>
-			),
+			render: (date: Date) => <Text type="secondary">{dayjs(date).format('DD.MM.YYYY HH:mm')}</Text>,
 		},
 		{
 			title: '',
@@ -164,12 +161,7 @@ export const ClustersPage = () => {
 			width: 80,
 			render: (_, record) => (
 				<Space>
-					<Button
-						type="text"
-						size="small"
-						icon={<EditOutlined />}
-						onClick={() => openEditModal(record)}
-					/>
+					<Button type="text" size="small" icon={<EditOutlined />} onClick={() => openEditModal(record)} />
 					<Button
 						type="text"
 						size="small"
@@ -188,9 +180,19 @@ export const ClustersPage = () => {
 
 	return (
 		<Space direction="vertical" size="large" style={{ width: '100%' }}>
-			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+			<div
+				style={{
+					display: 'flex',
+					justifyContent: 'space-between',
+					alignItems: 'flex-start',
+					flexWrap: 'wrap',
+					gap: 16,
+				}}
+			>
 				<div>
-					<Title level={2} style={{ marginBottom: 4 }}>Clusters</Title>
+					<Title level={2} style={{ marginBottom: 4 }}>
+						Clusters
+					</Title>
 					{clusters && (
 						<Text type="secondary">
 							{clusters.length} cluster{clusters.length !== 1 ? 's' : ''}
@@ -198,11 +200,7 @@ export const ClustersPage = () => {
 					)}
 				</div>
 
-				<Button
-					type="primary"
-					icon={<PlusOutlined />}
-					onClick={openCreateModal}
-				>
+				<Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
 					New Cluster
 				</Button>
 			</div>
@@ -235,7 +233,10 @@ export const ClustersPage = () => {
 					<Form.Item
 						label="Name"
 						name="name"
-						rules={[{ required: true, message: 'Required' }, { max: 100, message: 'Max 100 characters' }]}
+						rules={[
+							{ required: true, message: 'Required' },
+							{ max: 100, message: 'Max 100 characters' },
+						]}
 					>
 						<Input placeholder="production-cluster" />
 					</Form.Item>
@@ -244,11 +245,17 @@ export const ClustersPage = () => {
 						label="Kubeconfig"
 						name="kubeconfig"
 						rules={[{ required: !editingCluster, message: 'Required' }]}
-						extra={editingCluster ? 'Leave empty to keep current kubeconfig' : 'Paste your Kubernetes kubeconfig YAML'}
+						extra={
+							editingCluster
+								? 'Leave empty to keep current kubeconfig'
+								: 'Paste your Kubernetes kubeconfig YAML'
+						}
 					>
 						<TextArea
 							rows={8}
-							placeholder={editingCluster ? 'Leave empty to keep current' : 'apiVersion: v1\nkind: Config\n...'}
+							placeholder={
+								editingCluster ? 'Leave empty to keep current' : 'apiVersion: v1\nkind: Config\n...'
+							}
 						/>
 					</Form.Item>
 
@@ -269,4 +276,3 @@ export const ClustersPage = () => {
 		</Space>
 	);
 };
-

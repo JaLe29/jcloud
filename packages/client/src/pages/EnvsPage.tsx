@@ -1,8 +1,16 @@
-import { Table, Typography, Space, Alert, Card, Input, Button, Tag, Modal, Form, Select, message } from 'antd';
-import { SearchOutlined, PlusOutlined, DeleteOutlined, EditOutlined, LockOutlined, FilterOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import {
+	CloseCircleOutlined,
+	DeleteOutlined,
+	EditOutlined,
+	FilterOutlined,
+	LockOutlined,
+	PlusOutlined,
+	SearchOutlined,
+} from '@ant-design/icons';
+import { Alert, Button, Card, Form, Input, Modal, message, Select, Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useServerTable } from '../hooks/useServerTable';
 import { trpc } from '../utils/trpc';
@@ -72,9 +80,15 @@ export const EnvsPage = () => {
 			const trimmed = searchValue.trim();
 			const newFilter: EnvFilter = {};
 
-			if (trimmed) newFilter.key = trimmed;
-			if (selectedServiceId) newFilter.serviceId = selectedServiceId;
-			if (selectedApplicationId && !selectedServiceId) newFilter.applicationId = selectedApplicationId;
+			if (trimmed) {
+				newFilter.key = trimmed;
+			}
+			if (selectedServiceId) {
+				newFilter.serviceId = selectedServiceId;
+			}
+			if (selectedApplicationId && !selectedServiceId) {
+				newFilter.applicationId = selectedApplicationId;
+			}
 
 			table.handleFilterChange(Object.keys(newFilter).length > 0 ? newFilter : undefined);
 		}, 300);
@@ -85,8 +99,11 @@ export const EnvsPage = () => {
 	// Update URL when filters change
 	useEffect(() => {
 		const params = new URLSearchParams();
-		if (selectedServiceId) params.set('serviceId', selectedServiceId);
-		else if (selectedApplicationId) params.set('applicationId', selectedApplicationId);
+		if (selectedServiceId) {
+			params.set('serviceId', selectedServiceId);
+		} else if (selectedApplicationId) {
+			params.set('applicationId', selectedApplicationId);
+		}
 
 		setSearchParams(params, { replace: true });
 	}, [selectedServiceId, selectedApplicationId, setSearchParams]);
@@ -106,7 +123,7 @@ export const EnvsPage = () => {
 		{
 			enabled: !!editingEnv,
 			retry: false,
-			onError: (error) => {
+			onError: error => {
 				message.error(error.message);
 				closeModal();
 			},
@@ -114,23 +131,27 @@ export const EnvsPage = () => {
 	);
 
 	// Build application options
-	const applicationOptions = useMemo(() =>
-		applicationsData?.applications.map((app) => ({
-			label: app.name,
-			value: app.id,
-		})) || [],
-	[applicationsData]);
+	const applicationOptions = useMemo(
+		() =>
+			applicationsData?.applications.map(app => ({
+				label: app.name,
+				value: app.id,
+			})) || [],
+		[applicationsData],
+	);
 
 	// Build service options - all services or filtered by selected application
 	const serviceOptions = useMemo(() => {
-		if (!applicationsData) return [];
+		if (!applicationsData) {
+			return [];
+		}
 
 		const apps = selectedApplicationId
 			? applicationsData.applications.filter(app => app.id === selectedApplicationId)
 			: applicationsData.applications;
 
-		return apps.flatMap((app) =>
-			app.services.map((service) => ({
+		return apps.flatMap(app =>
+			app.services.map(service => ({
 				label: `${app.name} / ${service.name}`,
 				value: service.id,
 			})),
@@ -138,14 +159,16 @@ export const EnvsPage = () => {
 	}, [applicationsData, selectedApplicationId]);
 
 	// All service options for the form
-	const allServiceOptions = useMemo(() =>
-		applicationsData?.applications.flatMap((app) =>
-			app.services.map((service) => ({
-				label: `${app.name} / ${service.name}`,
-				value: service.id,
-			})),
-		) || [],
-	[applicationsData]);
+	const allServiceOptions = useMemo(
+		() =>
+			applicationsData?.applications.flatMap(app =>
+				app.services.map(service => ({
+					label: `${app.name} / ${service.name}`,
+					value: service.id,
+				})),
+			) || [],
+		[applicationsData],
+	);
 
 	// Get active filter info for display
 	const activeFilterInfo = useMemo(() => {
@@ -153,11 +176,15 @@ export const EnvsPage = () => {
 			const service = applicationsData?.applications
 				.flatMap(a => a.services.map(s => ({ ...s, appName: a.name })))
 				.find(s => s.id === selectedServiceId);
-			if (service) return `${service.appName} / ${service.name}`;
+			if (service) {
+				return `${service.appName} / ${service.name}`;
+			}
 		}
 		if (selectedApplicationId) {
 			const app = applicationsData?.applications.find(a => a.id === selectedApplicationId);
-			if (app) return app.name;
+			if (app) {
+				return app.name;
+			}
 		}
 		return null;
 	}, [selectedServiceId, selectedApplicationId, applicationsData]);
@@ -168,7 +195,7 @@ export const EnvsPage = () => {
 			utils.env.list.invalidate();
 			closeModal();
 		},
-		onError: (error) => message.error(error.message),
+		onError: error => message.error(error.message),
 	});
 
 	const updateMutation = trpc.env.update.useMutation({
@@ -177,7 +204,7 @@ export const EnvsPage = () => {
 			utils.env.list.invalidate();
 			closeModal();
 		},
-		onError: (error) => message.error(error.message),
+		onError: error => message.error(error.message),
 	});
 
 	const deleteMutation = trpc.env.delete.useMutation({
@@ -185,7 +212,7 @@ export const EnvsPage = () => {
 			message.success('Environment variable deleted');
 			utils.env.list.invalidate();
 		},
-		onError: (error) => message.error(error.message),
+		onError: error => message.error(error.message),
 	});
 
 	const openCreateModal = () => {
@@ -209,7 +236,7 @@ export const EnvsPage = () => {
 				name: envDetail.name,
 				key: envDetail.key,
 				value: envDetail.value,
-				serviceIds: envDetail.services.map((s) => s.id),
+				serviceIds: envDetail.services.map(s => s.id),
 			});
 		}
 	}, [envDetail, editingEnv, form]);
@@ -287,7 +314,7 @@ export const EnvsPage = () => {
 					{record.services.length === 0 ? (
 						<Text type="secondary">None</Text>
 					) : (
-						record.services.map((s) => (
+						record.services.map(s => (
 							<Tag key={s.id}>
 								{s.application.name}/{s.name}
 							</Tag>
@@ -301,9 +328,7 @@ export const EnvsPage = () => {
 			dataIndex: 'createdAt',
 			key: 'createdAt',
 			width: 140,
-			render: (date: Date) => (
-				<Text type="secondary">{dayjs(date).format('DD.MM.YYYY HH:mm')}</Text>
-			),
+			render: (date: Date) => <Text type="secondary">{dayjs(date).format('DD.MM.YYYY HH:mm')}</Text>,
 			sorter: true,
 			sortOrder: table.getSortOrder('createdAt'),
 		},
@@ -313,12 +338,7 @@ export const EnvsPage = () => {
 			width: 80,
 			render: (_, record) => (
 				<Space>
-					<Button
-						type="text"
-						size="small"
-						icon={<EditOutlined />}
-						onClick={() => openEditModal(record)}
-					/>
+					<Button type="text" size="small" icon={<EditOutlined />} onClick={() => openEditModal(record)} />
 					<Button
 						type="text"
 						size="small"
@@ -337,9 +357,19 @@ export const EnvsPage = () => {
 
 	return (
 		<Space direction="vertical" size="large" style={{ width: '100%' }}>
-			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+			<div
+				style={{
+					display: 'flex',
+					justifyContent: 'space-between',
+					alignItems: 'flex-start',
+					flexWrap: 'wrap',
+					gap: 16,
+				}}
+			>
 				<div>
-					<Title level={2} style={{ marginBottom: 4 }}>Environment Variables</Title>
+					<Title level={2} style={{ marginBottom: 4 }}>
+						Environment Variables
+					</Title>
 					<Space size="small">
 						{data?.pagination && (
 							<Text type="secondary">
@@ -354,11 +384,7 @@ export const EnvsPage = () => {
 					</Space>
 				</div>
 
-				<Button
-					type="primary"
-					icon={<PlusOutlined />}
-					onClick={openCreateModal}
-				>
+				<Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
 					New Variable
 				</Button>
 			</div>
@@ -370,14 +396,14 @@ export const EnvsPage = () => {
 						prefix={<SearchOutlined style={{ opacity: 0.5 }} />}
 						allowClear
 						value={searchValue}
-						onChange={(e) => setSearchValue(e.target.value)}
+						onChange={e => setSearchValue(e.target.value)}
 						style={{ width: 200 }}
 					/>
 					<Select
 						placeholder="Filter by application"
 						allowClear
 						value={selectedApplicationId}
-						onChange={(value) => {
+						onChange={value => {
 							setSelectedApplicationId(value);
 							setSelectedServiceId(undefined); // Reset service when app changes
 						}}
@@ -395,11 +421,7 @@ export const EnvsPage = () => {
 						style={{ width: 220 }}
 					/>
 					{(selectedApplicationId || selectedServiceId || searchValue) && (
-						<Button
-							type="text"
-							icon={<CloseCircleOutlined />}
-							onClick={clearFilters}
-						>
+						<Button type="text" icon={<CloseCircleOutlined />} onClick={clearFilters}>
 							Clear
 						</Button>
 					)}
@@ -418,7 +440,7 @@ export const EnvsPage = () => {
 						current: table.page,
 						pageSize: table.pageSize,
 						showSizeChanger: true,
-						showTotal: (total) => `${total} items`,
+						showTotal: total => `${total} items`,
 					}}
 				/>
 			</Card>
@@ -437,10 +459,7 @@ export const EnvsPage = () => {
 					requiredMark={false}
 					style={{ marginTop: 24 }}
 				>
-					<Form.Item
-						label="Name"
-						name="name"
-					>
+					<Form.Item label="Name" name="name">
 						<Input placeholder="Optional descriptive name" />
 					</Form.Item>
 
@@ -455,18 +474,11 @@ export const EnvsPage = () => {
 						<Input placeholder="DATABASE_URL" />
 					</Form.Item>
 
-					<Form.Item
-						label="Value"
-						name="value"
-						rules={[{ required: true, message: 'Required' }]}
-					>
+					<Form.Item label="Value" name="value" rules={[{ required: true, message: 'Required' }]}>
 						<Input.TextArea rows={3} placeholder="Enter secret value" />
 					</Form.Item>
 
-					<Form.Item
-						label="Assign to Services"
-						name="serviceIds"
-					>
+					<Form.Item label="Assign to Services" name="serviceIds">
 						<Select
 							mode="multiple"
 							placeholder="Select services"

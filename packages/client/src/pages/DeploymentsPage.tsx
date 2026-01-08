@@ -1,11 +1,10 @@
-import { useState } from 'react';
-import { Table, Typography, Space, Card } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import { EyeOutlined } from '@ant-design/icons';
-import dayjs from 'dayjs';
-import { trpc } from '../utils/trpc';
-import type { inferRouterOutputs } from '@trpc/server';
 import type { AppRouter } from '@jcloud/bff/src/trpc/router';
+import type { inferRouterOutputs } from '@trpc/server';
+import { Card, Space, Table, Typography } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import dayjs from 'dayjs';
+import { useState } from 'react';
+import { trpc } from '../utils/trpc';
 
 const { Title, Text } = Typography;
 
@@ -29,7 +28,9 @@ export const DeploymentsPage = () => {
 			key: 'image',
 			ellipsis: true,
 			render: (image: string) => (
-				<Text code style={{ fontSize: 12 }}>{image}</Text>
+				<Text code style={{ fontSize: 12 }}>
+					{image}
+				</Text>
 			),
 		},
 		{
@@ -39,7 +40,9 @@ export const DeploymentsPage = () => {
 			render: (_: unknown, record: DeploymentData) => (
 				<Space direction="vertical" size={0}>
 					<Text>{record.service.name}</Text>
-					<Text type="secondary" style={{ fontSize: 12 }}>{record.service.application.name}</Text>
+					<Text type="secondary" style={{ fontSize: 12 }}>
+						{record.service.application.name}
+					</Text>
 				</Space>
 			),
 		},
@@ -48,16 +51,24 @@ export const DeploymentsPage = () => {
 			dataIndex: 'createdAt',
 			key: 'createdAt',
 			width: 160,
-			render: (date: Date) => (
-				<Text style={{ fontSize: 12 }}>{dayjs(date).format('DD.MM.YYYY HH:mm:ss')}</Text>
-			),
+			render: (date: Date) => <Text style={{ fontSize: 12 }}>{dayjs(date).format('DD.MM.YYYY HH:mm:ss')}</Text>,
 		},
 	];
 
 	return (
 		<Space direction="vertical" size="large" style={{ width: '100%' }}>
-			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-				<Title level={2} style={{ margin: 0 }}>Deployments</Title>
+			<div
+				style={{
+					display: 'flex',
+					justifyContent: 'space-between',
+					alignItems: 'center',
+					flexWrap: 'wrap',
+					gap: 16,
+				}}
+			>
+				<Title level={2} style={{ margin: 0 }}>
+					Deployments
+				</Title>
 			</div>
 
 			<Card>
@@ -71,7 +82,7 @@ export const DeploymentsPage = () => {
 						total: data?.pagination?.total || 0,
 						pageSize: 20,
 						showSizeChanger: false,
-						showTotal: (total) => `${total} deployment${total !== 1 ? 's' : ''}`,
+						showTotal: total => `${total} deployment${total !== 1 ? 's' : ''}`,
 						onChange: setPage,
 					}}
 					locale={{

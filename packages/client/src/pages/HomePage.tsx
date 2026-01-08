@@ -1,5 +1,5 @@
-import { Typography, Space, Alert, Card, Row, Col, Statistic, Button, Table, Tag } from 'antd';
-import { CloudServerOutlined, AppstoreOutlined, PlusOutlined } from '@ant-design/icons';
+import { AppstoreOutlined, CloudServerOutlined, PlusOutlined } from '@ant-design/icons';
+import { Alert, Button, Card, Col, Row, Space, Statistic, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
@@ -38,9 +38,7 @@ export const HomePage = () => {
 			title: 'Services',
 			key: 'servicesCount',
 			render: (_, record) => (
-				<Text type={record._count.services > 0 ? undefined : 'secondary'}>
-					{record._count.services}
-				</Text>
+				<Text type={record._count.services > 0 ? undefined : 'secondary'}>{record._count.services}</Text>
 			),
 			width: 80,
 			align: 'center',
@@ -49,32 +47,34 @@ export const HomePage = () => {
 			title: 'Created',
 			dataIndex: 'createdAt',
 			key: 'createdAt',
-			render: (date: Date) => (
-				<Text type="secondary">{dayjs(date).format('DD.MM.YYYY')}</Text>
-			),
+			render: (date: Date) => <Text type="secondary">{dayjs(date).format('DD.MM.YYYY')}</Text>,
 		},
 	];
 
 	if (error) {
-		return (
-			<Alert message="Error" description={error.message} type="error" showIcon />
-		);
+		return <Alert message="Error" description={error.message} type="error" showIcon />;
 	}
 
 	const totalServices = data?.applications?.reduce((sum, app) => sum + app._count.services, 0) || 0;
 
 	return (
 		<Space direction="vertical" size="large" style={{ width: '100%' }}>
-			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+			<div
+				style={{
+					display: 'flex',
+					justifyContent: 'space-between',
+					alignItems: 'flex-start',
+					flexWrap: 'wrap',
+					gap: 16,
+				}}
+			>
 				<div>
-					<Title level={2} style={{ marginBottom: 4 }}>Dashboard</Title>
+					<Title level={2} style={{ marginBottom: 4 }}>
+						Dashboard
+					</Title>
 					<Text type="secondary">Overview of your applications and services</Text>
 				</div>
-				<Button
-					type="primary"
-					icon={<PlusOutlined />}
-					onClick={() => navigate('/applications/new')}
-				>
+				<Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/applications/new')}>
 					New Application
 				</Button>
 			</div>
@@ -91,11 +91,7 @@ export const HomePage = () => {
 				</Col>
 				<Col xs={24} sm={12} lg={8}>
 					<Card>
-						<Statistic
-							title="Services"
-							value={totalServices}
-							prefix={<CloudServerOutlined />}
-						/>
+						<Statistic title="Services" value={totalServices} prefix={<CloudServerOutlined />} />
 					</Card>
 				</Col>
 				<Col xs={24} sm={12} lg={8}>
@@ -121,7 +117,7 @@ export const HomePage = () => {
 					dataSource={data?.applications || []}
 					loading={isLoading}
 					rowKey="id"
-					onRow={(record) => ({
+					onRow={record => ({
 						onClick: () => navigate(`/applications/${record.id}`),
 						style: { cursor: 'pointer' },
 					})}
@@ -134,7 +130,7 @@ export const HomePage = () => {
 								<Button
 									type="primary"
 									icon={<PlusOutlined />}
-									onClick={(e) => {
+									onClick={e => {
 										e.stopPropagation();
 										navigate('/applications/new');
 									}}
