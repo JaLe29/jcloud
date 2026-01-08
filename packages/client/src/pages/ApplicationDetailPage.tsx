@@ -240,7 +240,21 @@ export const ApplicationDetailPage = () => {
 		{ cpuRequest: 0, cpuLimit: 0, memoryRequest: 0, memoryLimit: 0 },
 	);
 
-	const hasResources = totalResources.cpuRequest > 0 || totalResources.cpuLimit > 0 || totalResources.memoryRequest > 0 || totalResources.memoryLimit > 0;
+	const formatResourceDisplay = (request: number, limit: number, unit: string) => {
+		const hasRequest = request > 0;
+		const hasLimit = limit > 0;
+		
+		if (!hasRequest && !hasLimit) {
+			return 'Not set';
+		}
+		
+		const requestStr = hasRequest ? request.toString() : '-';
+		const limitStr = hasLimit ? limit.toString() : '-';
+		return `${requestStr} / ${limitStr} ${unit}`;
+	};
+
+	const cpuDisplay = formatResourceDisplay(totalResources.cpuRequest, totalResources.cpuLimit, 'm');
+	const memoryDisplay = formatResourceDisplay(totalResources.memoryRequest, totalResources.memoryLimit, 'MB');
 
 	return (
 		<Space direction="vertical" size="large" style={{ width: '100%' }}>
@@ -251,20 +265,16 @@ export const ApplicationDetailPage = () => {
 					</Button>
 					<Title level={2} style={{ margin: 0 }}>{application.name}</Title>
 					<Tag>{application.namespace}</Tag>
-					{hasResources && (
-						<>
-							<Tooltip title="CPU Request / Limit">
-								<Tag color="blue">
-									CPU: {totalResources.cpuRequest > 0 ? totalResources.cpuRequest : '-'} / {totalResources.cpuLimit > 0 ? totalResources.cpuLimit : '-'} m
-								</Tag>
-							</Tooltip>
-							<Tooltip title="Memory Request / Limit">
-								<Tag color="green">
-									Memory: {totalResources.memoryRequest > 0 ? totalResources.memoryRequest : '-'} / {totalResources.memoryLimit > 0 ? totalResources.memoryLimit : '-'} MB
-								</Tag>
-							</Tooltip>
-						</>
-					)}
+					<Tooltip title="CPU Request / Limit">
+						<Tag color="blue">
+							CPU: {cpuDisplay}
+						</Tag>
+					</Tooltip>
+					<Tooltip title="Memory Request / Limit">
+						<Tag color="green">
+							Memory: {memoryDisplay}
+						</Tag>
+					</Tooltip>
 				</Space>
 				<Space>
 					<Button icon={<EditOutlined />} onClick={() => navigate(`/applications/${id}/edit`)}>
