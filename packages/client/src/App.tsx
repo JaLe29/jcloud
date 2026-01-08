@@ -13,6 +13,7 @@ import { EnvsPage } from './pages/EnvsPage';
 import { HomePage } from './pages/HomePage';
 import { ServiceDetailPage } from './pages/ServiceDetailPage';
 import { ServiceFormPage } from './pages/ServiceFormPage';
+import { PodsPage } from './pages/PodsPage';
 import { TaskDetailPage } from './pages/TaskDetailPage';
 import { TasksPage } from './pages/TasksPage';
 import { trpc, trpcClient } from './utils/trpc';
@@ -137,6 +138,14 @@ export const App: React.FC = () => {
 			element: (
 				<Layout>
 					<TaskDetailPage />
+				</Layout>
+			),
+		},
+		{
+			path: '/pods',
+			element: (
+				<Layout>
+					<PodsPage />
 				</Layout>
 			),
 		},

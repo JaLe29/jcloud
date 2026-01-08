@@ -1,6 +1,7 @@
 import {
 	AppstoreOutlined,
 	ClusterOutlined,
+	ContainerOutlined,
 	ExclamationCircleOutlined,
 	HomeOutlined,
 	KeyOutlined,
@@ -52,6 +53,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 			label: 'Deployments',
 		},
 		{
+			key: '/pods',
+			icon: <ContainerOutlined />,
+			label: 'Pods',
+		},
+		{
 			key: '/tasks',
 			icon: <UnorderedListOutlined />,
 			label: 'Tasks',
@@ -77,6 +83,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 		}
 		if (location.pathname.startsWith('/deployments')) {
 			return '/deployments';
+		}
+		if (location.pathname.startsWith('/pods')) {
+			return '/pods';
 		}
 		if (location.pathname.startsWith('/tasks')) {
 			return '/tasks';
