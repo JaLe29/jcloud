@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Table, Typography, Space, Card, Tag, Button, Select } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -25,14 +25,66 @@ export const TasksPage = () => {
 	const navigate = useNavigate();
 	const [page, setPage] = useState(1);
 	const [statusFilter, setStatusFilter] = useState<TaskStatus | undefined>();
+	const [applicationFilter, setApplicationFilter] = useState<string | undefined>();
+	const [serviceFilter, setServiceFilter] = useState<string | undefined>();
 
 	const { data, isLoading } = trpc.task.list.useQuery({
 		page,
 		limit: 20,
 		sortBy: 'createdAt',
 		sortOrder: 'desc',
-		filter: statusFilter ? { status: statusFilter } : undefined,
+		filter: {
+			...(statusFilter ? { status: statusFilter } : {}),
+			...(applicationFilter ? { applicationId: applicationFilter } : {}),
+			...(serviceFilter ? { serviceId: serviceFilter } : {}),
+		},
 	});
+
+	const { data: applicationsData } = trpc.application.list.useQuery({ limit: 100 });
+
+	// Build application options
+	const applicationOptions = useMemo(
+		() =>
+			applicationsData?.applications.map((app) => ({
+				label: app.name,
+				value: app.id,
+			})) || [],
+		[applicationsData],
+	);
+
+	// Build service options - all services or filtered by selected application
+	const serviceOptions = useMemo(() => {
+		if (!applicationsData) return [];
+
+		const apps = applicationFilter
+			? applicationsData.applications.filter((app) => app.id === applicationFilter)
+			: applicationsData.applications;
+
+		return apps.flatMap((app) =>
+			app.services.map((service) => ({
+				label: `${app.name} / ${service.name}`,
+				value: service.id,
+			})),
+		);
+	}, [applicationsData, applicationFilter]);
+
+	// Reset service filter when application filter changes
+	const handleApplicationFilterChange = (value: string | undefined) => {
+		setApplicationFilter(value);
+		setServiceFilter(undefined);
+		setPage(1);
+	};
+
+	// Reset page when filters change
+	const handleServiceFilterChange = (value: string | undefined) => {
+		setServiceFilter(value);
+		setPage(1);
+	};
+
+	const handleStatusFilterChange = (value: TaskStatus | undefined) => {
+		setStatusFilter(value);
+		setPage(1);
+	};
 
 	const getTaskType = (meta: Record<string, unknown> | null): string => {
 		if (!meta) return 'Unknown';
@@ -115,19 +167,46 @@ export const TasksPage = () => {
 		<Space direction="vertical" size="large" style={{ width: '100%' }}>
 			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
 				<Title level={2} style={{ margin: 0 }}>Tasks</Title>
-				<Select
-					placeholder="Filter by status"
-					allowClear
-					style={{ width: 150 }}
-					value={statusFilter}
-					onChange={setStatusFilter}
-					options={[
-						{ value: 'WAITING', label: 'Waiting' },
-						{ value: 'EXECUTING', label: 'Executing' },
-						{ value: 'DONE', label: 'Done' },
-						{ value: 'FAILED', label: 'Failed' },
-					]}
-				/>
+				<Space wrap>
+					<Select
+						placeholder="Filter by application"
+						allowClear
+						style={{ width: 200 }}
+						value={applicationFilter}
+						onChange={handleApplicationFilterChange}
+						options={applicationOptions}
+						showSearch
+						filterOption={(input, option) =>
+							(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+						}
+					/>
+					<Select
+						placeholder="Filter by service"
+						allowClear
+						style={{ width: 250 }}
+						value={serviceFilter}
+						onChange={handleServiceFilterChange}
+						options={serviceOptions}
+						disabled={!applicationFilter && serviceOptions.length === 0}
+						showSearch
+						filterOption={(input, option) =>
+							(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+						}
+					/>
+					<Select
+						placeholder="Filter by status"
+						allowClear
+						style={{ width: 150 }}
+						value={statusFilter}
+						onChange={handleStatusFilterChange}
+						options={[
+							{ value: 'WAITING', label: 'Waiting' },
+							{ value: 'EXECUTING', label: 'Executing' },
+							{ value: 'DONE', label: 'Done' },
+							{ value: 'FAILED', label: 'Failed' },
+						]}
+					/>
+				</Space>
 			</div>
 
 			<Card>
