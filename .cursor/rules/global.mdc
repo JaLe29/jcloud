@@ -37,3 +37,6 @@ alwaysApply: true
 - **Date & Time:** Always and only use the `dayjs` library for any date or time manipulations. Do not use the native `Date` object directly for operations.
 - **Routing:** For creating or editing entities, always create a new dedicated route. (e.g., `/posts/new`, `/posts/[id]/edit`). We use [React Router] for routing.
 - **Accessibility (a11y):** Ensure all components are accessible. Use semantic HTML tags (`<nav>`, `<main>`, `<button>`) and provide `aria-*` attributes where necessary.
+
+# --- Code Style ---
+- **Always** run build and test to check the code after completing a task.
