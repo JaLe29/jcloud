@@ -76,6 +76,9 @@ export const ApplicationPods = ({ serviceIds }: ApplicationPodsProps) => {
 
 	serviceStatusQueries.forEach((query, index) => {
 		const serviceId = serviceIds[index];
+		if (!serviceId) {
+			return;
+		}
 		if (query.data) {
 			serviceStatuses.push({
 				serviceId,
