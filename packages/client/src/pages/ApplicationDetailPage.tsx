@@ -226,15 +226,45 @@ export const ApplicationDetailPage = () => {
 		);
 	}
 
+	// Calculate total resources across all services
+	const totalResources = application.services.reduce(
+		(acc, service) => {
+			// Multiply by replicas to get total resources
+			const replicas = service.replicas || 1;
+			acc.cpuRequest += (service.cpuRequest ?? 0) * replicas;
+			acc.cpuLimit += (service.cpuLimit ?? 0) * replicas;
+			acc.memoryRequest += (service.memoryRequest ?? 0) * replicas;
+			acc.memoryLimit += (service.memoryLimit ?? 0) * replicas;
+			return acc;
+		},
+		{ cpuRequest: 0, cpuLimit: 0, memoryRequest: 0, memoryLimit: 0 },
+	);
+
+	const hasResources = totalResources.cpuRequest > 0 || totalResources.cpuLimit > 0 || totalResources.memoryRequest > 0 || totalResources.memoryLimit > 0;
+
 	return (
 		<Space direction="vertical" size="large" style={{ width: '100%' }}>
 			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-				<Space>
+				<Space wrap>
 					<Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/applications')}>
 						Back
 					</Button>
 					<Title level={2} style={{ margin: 0 }}>{application.name}</Title>
 					<Tag>{application.namespace}</Tag>
+					{hasResources && (
+						<>
+							<Tooltip title="CPU Request / Limit">
+								<Tag color="blue">
+									CPU: {totalResources.cpuRequest > 0 ? totalResources.cpuRequest : '-'} / {totalResources.cpuLimit > 0 ? totalResources.cpuLimit : '-'} m
+								</Tag>
+							</Tooltip>
+							<Tooltip title="Memory Request / Limit">
+								<Tag color="green">
+									Memory: {totalResources.memoryRequest > 0 ? totalResources.memoryRequest : '-'} / {totalResources.memoryLimit > 0 ? totalResources.memoryLimit : '-'} MB
+								</Tag>
+							</Tooltip>
+						</>
+					)}
 				</Space>
 				<Space>
 					<Button icon={<EditOutlined />} onClick={() => navigate(`/applications/${id}/edit`)}>
