@@ -5,6 +5,7 @@ import {
 	LoadingOutlined,
 } from '@ant-design/icons';
 import type { AppRouter } from '@jcloud/bff/src/trpc/router';
+import { useQueries } from '@tanstack/react-query';
 import type { inferRouterOutputs } from '@trpc/server';
 import { Card, Select, Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -63,7 +64,7 @@ export const PodsPage = () => {
 
 	// Get all services for selected application or all services
 	const serviceIds = useMemo(() => {
-		if (!applicationsData) {
+		if (!applicationsData || !applicationsData.applications) {
 			return [];
 		}
 
@@ -73,56 +74,61 @@ export const PodsPage = () => {
 
 		if (applicationFilter) {
 			const app = applicationsData.applications.find(a => a.id === applicationFilter);
-			return app?.services.map(s => s.id) || [];
+			return app?.services?.map(s => s.id) || [];
 		}
 
 		// All services from all applications
-		return applicationsData.applications.flatMap(app => app.services.map(s => s.id));
+		return applicationsData.applications.flatMap(app => app.services?.map(s => s.id) || []);
 	}, [applicationsData, applicationFilter, serviceFilter]);
 
-	// Fetch status for all services in parallel
-	const serviceStatusQueries = serviceIds.map(serviceId =>
-		trpc.kubernetes.getServiceStatus.useQuery(
-			{ serviceId },
-			{
-				refetchInterval: 5000, // Refresh every 5 seconds
-				retry: false,
+	// Fetch status for all services in parallel using useQueries
+	const utils = trpc.useUtils();
+	const serviceStatusQueries = useQueries({
+		queries: serviceIds.map(serviceId => ({
+			queryKey: [['kubernetes', 'getServiceStatus'], { input: { serviceId }, type: 'query' }],
+			queryFn: async () => {
+				return await utils.kubernetes.getServiceStatus.fetch({ serviceId });
 			},
-		),
-	);
+			refetchInterval: 5000, // Refresh every 5 seconds
+			retry: false,
+		})),
+	});
 
 	const isLoading = serviceStatusQueries.some(query => query.isLoading);
 
 	// Collect all pods with their service and application information
-	const allPods: PodWithService[] = [];
+	const allPods: PodWithService[] = useMemo(() => {
+		const pods: PodWithService[] = [];
 
-	serviceStatusQueries.forEach((query, index) => {
-		const serviceId = serviceIds[index];
-		if (!serviceId || !query.data) {
-			return;
-		}
+		serviceStatusQueries.forEach((query, index) => {
+			const serviceId = serviceIds[index];
+			if (!serviceId || !query.data) {
+				return;
+			}
 
-		// Find application and service info
-		const app = applicationsData?.applications.find(a =>
-			a.services.some(s => s.id === serviceId),
-		);
-		const service = app?.services.find(s => s.id === serviceId);
+			// Find application and service info
+			const app = applicationsData?.applications?.find(a => a.services?.some(s => s.id === serviceId));
 
-		query.data.pods.forEach(pod => {
-			allPods.push({
-				...pod,
-				serviceName: query.data!.serviceName,
-				serviceId,
-				applicationName: app?.name || 'Unknown',
-				applicationId: app?.id || '',
-			});
+			if (query.data?.pods) {
+				query.data.pods.forEach((pod: PodInfo) => {
+					pods.push({
+						...pod,
+						serviceName: query.data!.serviceName,
+						serviceId,
+						applicationName: app?.name || 'Unknown',
+						applicationId: app?.id || '',
+					});
+				});
+			}
 		});
-	});
+
+		return pods;
+	}, [serviceStatusQueries, serviceIds, applicationsData]);
 
 	// Build application options
 	const applicationOptions = useMemo(
 		() =>
-			applicationsData?.applications.map(app => ({
+			applicationsData?.applications?.map(app => ({
 				label: app.name,
 				value: app.id,
 			})) || [],
@@ -131,7 +137,7 @@ export const PodsPage = () => {
 
 	// Build service options - all services or filtered by selected application
 	const serviceOptions = useMemo(() => {
-		if (!applicationsData) {
+		if (!applicationsData || !applicationsData.applications) {
 			return [];
 		}
 
@@ -139,21 +145,22 @@ export const PodsPage = () => {
 			? applicationsData.applications.filter(app => app.id === applicationFilter)
 			: applicationsData.applications;
 
-		return apps.flatMap(app =>
-			app.services.map(service => ({
-				label: `${app.name} / ${service.name}`,
-				value: service.id,
-			})),
+		return apps.flatMap(
+			app =>
+				app.services?.map(service => ({
+					label: `${app.name} / ${service.name}`,
+					value: service.id,
+				})) || [],
 		);
 	}, [applicationsData, applicationFilter]);
 
 	// Reset service filter when application filter changes
 	const handleApplicationFilterChange = (value: string | undefined) => {
 		setApplicationFilter(value);
-		if (value && serviceFilter) {
+		if (value && serviceFilter && applicationsData?.applications) {
 			// Check if current service filter is still valid
-			const app = applicationsData?.applications.find(a => a.id === value);
-			const serviceExists = app?.services.some(s => s.id === serviceFilter);
+			const app = applicationsData.applications.find(a => a.id === value);
+			const serviceExists = app?.services?.some(s => s.id === serviceFilter);
 			if (!serviceExists) {
 				setServiceFilter(undefined);
 			}
@@ -338,4 +345,3 @@ export const PodsPage = () => {
 		</Space>
 	);
 };
-

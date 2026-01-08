@@ -5,9 +5,11 @@ import {
 	LoadingOutlined,
 } from '@ant-design/icons';
 import type { AppRouter } from '@jcloud/bff/src/trpc/router';
+import { useQueries } from '@tanstack/react-query';
 import type { inferRouterOutputs } from '@trpc/server';
-import { Card, Space, Table, Tag, Typography, Collapse } from 'antd';
+import { Card, Collapse, Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import { useMemo } from 'react';
 import { trpc } from '../../utils/trpc';
 
 const { Text } = Typography;
@@ -56,51 +58,59 @@ const getPodStatusIcon = (status: string, ready: boolean): React.ReactNode => {
 };
 
 export const ApplicationPods = ({ serviceIds }: ApplicationPodsProps) => {
-	// Fetch status for all services in parallel
-	const serviceStatusQueries = serviceIds.map(serviceId =>
-		trpc.kubernetes.getServiceStatus.useQuery(
-			{ serviceId },
-			{
-				refetchInterval: 5000, // Refresh every 5 seconds
-				retry: false,
+	// Fetch status for all services in parallel using useQueries
+	const utils = trpc.useUtils();
+	const serviceStatusQueries = useQueries({
+		queries: serviceIds.map(serviceId => ({
+			queryKey: [['kubernetes', 'getServiceStatus'], { input: { serviceId }, type: 'query' }],
+			queryFn: async () => {
+				return await utils.kubernetes.getServiceStatus.fetch({ serviceId });
 			},
-		),
-	);
+			refetchInterval: 5000, // Refresh every 5 seconds
+			retry: false,
+		})),
+	});
 
 	const isLoading = serviceStatusQueries.some(query => query.isLoading);
 	const hasError = serviceStatusQueries.some(query => query.isError);
 
 	// Collect all pods with their service information
-	const allPods: PodWithService[] = [];
-	const serviceStatuses: Array<{ serviceId: string; serviceName: string; status: ServiceStatus | null }> = [];
+	const { allPods, serviceStatuses } = useMemo(() => {
+		const pods: PodWithService[] = [];
+		const statuses: Array<{ serviceId: string; serviceName: string; status: ServiceStatus | null }> = [];
 
-	serviceStatusQueries.forEach((query, index) => {
-		const serviceId = serviceIds[index];
-		if (!serviceId) {
-			return;
-		}
-		if (query.data) {
-			serviceStatuses.push({
-				serviceId,
-				serviceName: query.data.serviceName,
-				status: query.data,
-			});
-			query.data.pods.forEach(pod => {
-				allPods.push({
-					...pod,
-					serviceName: query.data!.serviceName,
+		serviceStatusQueries.forEach((query, index) => {
+			const serviceId = serviceIds[index];
+			if (!serviceId) {
+				return;
+			}
+			if (query.data) {
+				statuses.push({
 					serviceId,
+					serviceName: query.data.serviceName,
+					status: query.data,
 				});
-			});
-		} else if (!query.isLoading && !query.isError) {
-			// Service exists but no status yet
-			serviceStatuses.push({
-				serviceId,
-				serviceName: `Service ${serviceId.substring(0, 8)}...`,
-				status: null,
-			});
-		}
-	});
+				if (query.data.pods) {
+					query.data.pods.forEach((pod: PodInfo) => {
+						pods.push({
+							...pod,
+							serviceName: query.data!.serviceName,
+							serviceId,
+						});
+					});
+				}
+			} else if (!query.isLoading && !query.isError) {
+				// Service exists but no status yet
+				statuses.push({
+					serviceId,
+					serviceName: `Service ${serviceId.substring(0, 8)}...`,
+					status: null,
+				});
+			}
+		});
+
+		return { allPods: pods, serviceStatuses: statuses };
+	}, [serviceStatusQueries, serviceIds]);
 
 	const columns: ColumnsType<PodWithService> = [
 		{
@@ -206,14 +216,8 @@ export const ApplicationPods = ({ serviceIds }: ApplicationPodsProps) => {
 	// Calculate totals
 	const totalPods = allPods.length;
 	const readyPods = allPods.filter(pod => pod.ready).length;
-	const totalDesiredReplicas = serviceStatuses.reduce(
-		(sum, s) => sum + (s.status?.desiredReplicas ?? 0),
-		0,
-	);
-	const totalReadyReplicas = serviceStatuses.reduce(
-		(sum, s) => sum + (s.status?.readyReplicas ?? 0),
-		0,
-	);
+	const totalDesiredReplicas = serviceStatuses.reduce((sum, s) => sum + (s.status?.desiredReplicas ?? 0), 0);
+	const totalReadyReplicas = serviceStatuses.reduce((sum, s) => sum + (s.status?.readyReplicas ?? 0), 0);
 
 	return (
 		<Card
@@ -259,15 +263,20 @@ export const ApplicationPods = ({ serviceIds }: ApplicationPodsProps) => {
 															<strong>Deployment:</strong> {status.deploymentName}
 														</Text>
 														<Text>
-															<strong>Replicas:</strong> {status.readyReplicas}/{status.desiredReplicas} ready
+															<strong>Replicas:</strong> {status.readyReplicas}/
+															{status.desiredReplicas} ready
 														</Text>
 														<Text>
 															<strong>Pods:</strong> {status.pods.length}
 														</Text>
 														{status.desiredReplicas > 0 &&
 															status.readyReplicas < status.desiredReplicas && (
-																<Tag color="warning" icon={<ExclamationCircleOutlined />}>
-																	{status.desiredReplicas - status.readyReplicas} not ready
+																<Tag
+																	color="warning"
+																	icon={<ExclamationCircleOutlined />}
+																>
+																	{status.desiredReplicas - status.readyReplicas} not
+																	ready
 																</Tag>
 															)}
 													</Space>
@@ -286,4 +295,3 @@ export const ApplicationPods = ({ serviceIds }: ApplicationPodsProps) => {
 		</Card>
 	);
 };
-
