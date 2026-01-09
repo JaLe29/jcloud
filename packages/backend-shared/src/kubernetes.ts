@@ -278,23 +278,22 @@ export class KubernetesService {
 				container: options?.container,
 			});
 
-			// readNamespacedPodLog API - the error suggests the first parameter might be getting lost
-			// Try a different approach: call with explicit parameters, avoiding undefined where possible
-			// Build the call with only defined optional parameters
-			const apiParams: any[] = [trimmedPodName, namespace];
+			// readNamespacedPodLog API - based on examples, it seems to accept:
+			// (name, namespace, container?, ...otherOptionalParams)
+			// But the error suggests it might expect a simpler signature
+			// Try calling with just name, namespace, and container first
+			let logs: any;
 
-			// Add optional parameters - use null instead of undefined for optional params that aren't set
-			apiParams.push(null); // pretty
-			apiParams.push(null); // sinceSeconds
-			apiParams.push(null); // sinceTime
-			apiParams.push(null); // timestamps
-			apiParams.push(options?.tailLines ?? null); // tailLines
-			apiParams.push(null); // limitBytes
-			apiParams.push(null); // insecureSkipTLSVerifyBackend
-			apiParams.push(false); // follow
-			apiParams.push(options?.container ?? null); // container
+			if (options?.container) {
+				// If container is specified, pass it as third parameter
+				logs = await (coreApi as any).readNamespacedPodLog(trimmedPodName, namespace, options.container);
+			} else {
+				// If no container, try with just name and namespace
+				logs = await (coreApi as any).readNamespacedPodLog(trimmedPodName, namespace);
+			}
 
-			const logs = await (coreApi as any).readNamespacedPodLog(...apiParams);
+			// If we need tailLines, we might need to use a different approach
+			// But let's first see if basic call works
 
 			// Handle different return types based on API version
 			if (typeof logs === 'string') {
