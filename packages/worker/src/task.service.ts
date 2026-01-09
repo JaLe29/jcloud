@@ -17,7 +17,7 @@ import type {
 	V1Secret,
 	V1Service,
 } from '@kubernetes/client-node';
-import type { PrismaClient, Task } from '@prisma/client';
+import type { Prisma, PrismaClient, Task } from '@prisma/client';
 
 interface DockerSecretData {
 	name: string;
@@ -580,16 +580,25 @@ export class TaskService {
 				return;
 			}
 
-			await this.appendLog(task.id, `Service: ${service.name}`);
-			await this.appendLog(task.id, `Application: ${service.application.name}`);
-			await this.appendLog(task.id, `Namespace: ${service.application.namespace}`);
+			// Type assertion to include all Service fields
+			const serviceWithAllFields = service as Prisma.ServiceGetPayload<{
+				include: {
+					application: { include: { cluster: true } };
+					dockerSecrets: { include: { dockerSecret: true } };
+					envs: { include: { env: true } };
+				};
+			}>;
 
-			if (!service.application.cluster) {
-				await this.failTask(task.id, `Cluster not found for application ${service.application.id}`);
+			await this.appendLog(task.id, `Service: ${serviceWithAllFields.name}`);
+			await this.appendLog(task.id, `Application: ${serviceWithAllFields.application.name}`);
+			await this.appendLog(task.id, `Namespace: ${serviceWithAllFields.application.namespace}`);
+
+			if (!serviceWithAllFields.application.cluster) {
+				await this.failTask(task.id, `Cluster not found for application ${serviceWithAllFields.application.id}`);
 				return;
 			}
 
-			await this.appendLog(task.id, `Cluster: ${service.application.cluster.name}`);
+			await this.appendLog(task.id, `Cluster: ${serviceWithAllFields.application.cluster.name}`);
 
 			// Load kubeconfig from database for the cluster
 			await this.appendLog(task.id, 'Loading Kubernetes configuration...');
@@ -598,16 +607,16 @@ export class TaskService {
 			);
 			await this.appendLog(task.id, '✓ Kubernetes configuration loaded');
 
-			const namespace = service.application.namespace;
+			const namespace = serviceWithAllFields.application.namespace;
 
 			// Create namespace for the task's application
 			await this.createNamespace(coreApi, namespace, task.id);
 
 			// Create docker secrets
 			const imagePullSecrets: string[] = [];
-			if (service.dockerSecrets.length > 0) {
-				await this.appendLog(task.id, `Processing ${service.dockerSecrets.length} Docker secret(s)...`);
-				for (const { dockerSecret } of service.dockerSecrets) {
+			if (serviceWithAllFields.dockerSecrets.length > 0) {
+				await this.appendLog(task.id, `Processing ${serviceWithAllFields.dockerSecrets.length} Docker secret(s)...`);
+				for (const { dockerSecret } of serviceWithAllFields.dockerSecrets) {
 					await this.createDockerSecret(
 						coreApi,
 						namespace,
@@ -626,9 +635,9 @@ export class TaskService {
 			}
 
 			// Load and decrypt environment variables
-			await this.appendLog(task.id, `Processing ${service.envs.length} environment variable(s)...`);
+			await this.appendLog(task.id, `Processing ${serviceWithAllFields.envs.length} environment variable(s)...`);
 			const envVars: Array<{ name: string; value: string }> = [];
-			for (const { env } of service.envs) {
+			for (const { env } of serviceWithAllFields.envs) {
 				try {
 					const decryptedValue = decrypt(env.value);
 					envVars.push({
@@ -646,45 +655,45 @@ export class TaskService {
 
 			// Create or update deployment
 			await this.appendLog(task.id, 'Creating/updating deployment...');
-			const deploymentName = toK8sName(service.name);
+			const deploymentName = toK8sName(serviceWithAllFields.name);
 			await this.createDeployment(
 				appsApi,
 				{
-					name: service.name,
+					name: serviceWithAllFields.name,
 					namespace,
 					image,
-					replicas: service.replicas,
-					containerPort: service.containerPort,
+					replicas: serviceWithAllFields.replicas,
+					containerPort: serviceWithAllFields.containerPort,
 					imagePullSecrets,
 					env: envVars,
 					resources: {
-						cpuRequest: service.cpuRequest,
-						cpuLimit: service.cpuLimit,
-						memoryRequest: service.memoryRequest,
-						memoryLimit: service.memoryLimit,
+						cpuRequest: serviceWithAllFields.cpuRequest,
+						cpuLimit: serviceWithAllFields.cpuLimit,
+						memoryRequest: serviceWithAllFields.memoryRequest,
+						memoryLimit: serviceWithAllFields.memoryLimit,
 					},
-					livenessProbe: service.livenessProbePath
+					livenessProbe: (serviceWithAllFields as any).livenessProbePath
 						? {
-								path: service.livenessProbePath,
-								initialDelaySeconds: service.livenessProbeInitialDelaySeconds,
-								periodSeconds: service.livenessProbePeriodSeconds,
-								timeoutSeconds: service.livenessProbeTimeoutSeconds,
-								successThreshold: service.livenessProbeSuccessThreshold,
-								failureThreshold: service.livenessProbeFailureThreshold,
+								path: (serviceWithAllFields as any).livenessProbePath,
+								initialDelaySeconds: (serviceWithAllFields as any).livenessProbeInitialDelaySeconds,
+								periodSeconds: (serviceWithAllFields as any).livenessProbePeriodSeconds,
+								timeoutSeconds: (serviceWithAllFields as any).livenessProbeTimeoutSeconds,
+								successThreshold: (serviceWithAllFields as any).livenessProbeSuccessThreshold,
+								failureThreshold: (serviceWithAllFields as any).livenessProbeFailureThreshold,
 							}
 						: null,
-					readinessProbe: service.readinessProbePath
+					readinessProbe: (serviceWithAllFields as any).readinessProbePath
 						? {
-								path: service.readinessProbePath,
-								initialDelaySeconds: service.readinessProbeInitialDelaySeconds,
-								periodSeconds: service.readinessProbePeriodSeconds,
-								timeoutSeconds: service.readinessProbeTimeoutSeconds,
-								successThreshold: service.readinessProbeSuccessThreshold,
-								failureThreshold: service.readinessProbeFailureThreshold,
+								path: (serviceWithAllFields as any).readinessProbePath,
+								initialDelaySeconds: (serviceWithAllFields as any).readinessProbeInitialDelaySeconds,
+								periodSeconds: (serviceWithAllFields as any).readinessProbePeriodSeconds,
+								timeoutSeconds: (serviceWithAllFields as any).readinessProbeTimeoutSeconds,
+								successThreshold: (serviceWithAllFields as any).readinessProbeSuccessThreshold,
+								failureThreshold: (serviceWithAllFields as any).readinessProbeFailureThreshold,
 							}
 						: null,
-					maxSurge: service.maxSurge,
-					maxUnavailable: service.maxUnavailable,
+					maxSurge: (serviceWithAllFields as any).maxSurge,
+					maxUnavailable: (serviceWithAllFields as any).maxUnavailable,
 				},
 				task.id,
 			);
@@ -694,42 +703,42 @@ export class TaskService {
 			await this.createK8sService(
 				coreApi,
 				{
-					name: service.name,
+					name: serviceWithAllFields.name,
 					namespace,
-					containerPort: service.containerPort,
+					containerPort: serviceWithAllFields.containerPort,
 				},
 				deploymentName,
 				task.id,
 			);
 
 			// Create or delete Ingress based on ingressUrl
-			if (service.ingressUrl) {
+			if (serviceWithAllFields.ingressUrl) {
 				try {
 					await this.appendLog(task.id, 'Creating/updating ingress...');
-					const url = new URL(service.ingressUrl);
-					const k8sServiceName = toK8sName(service.name);
+					const url = new URL(serviceWithAllFields.ingressUrl);
+					const k8sServiceName = toK8sName(serviceWithAllFields.name);
 					await this.createIngress(
 						networkingApi,
 						{
-							name: service.name,
+							name: serviceWithAllFields.name,
 							namespace,
 							host: url.hostname,
 							serviceName: k8sServiceName,
-							servicePort: service.containerPort,
+							servicePort: serviceWithAllFields.containerPort,
 						},
 						task.id,
 					);
 				} catch (_err) {
 					await this.appendLog(
 						task.id,
-						`✗ Warning: Failed to create ingress - invalid URL: ${service.ingressUrl}`,
+						`✗ Warning: Failed to create ingress - invalid URL: ${serviceWithAllFields.ingressUrl}`,
 					);
 				}
 			} else {
 				// Delete ingress if it exists (ingressUrl was removed)
 				await this.appendLog(task.id, 'No ingress URL configured, checking for existing ingress to delete...');
 				try {
-					await this.deleteIngress(networkingApi, service.name, namespace, task.id);
+					await this.deleteIngress(networkingApi, serviceWithAllFields.name, namespace, task.id);
 				} catch (err) {
 					// Log warning but don't fail the task if ingress deletion fails
 					const errorMessage = err instanceof Error ? err.message : String(err);
