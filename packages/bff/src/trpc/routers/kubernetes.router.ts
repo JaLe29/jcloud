@@ -41,6 +41,14 @@ export const kubernetesRouter = (router: Router, procedure: Procedure) => {
 				const k8sService = new KubernetesService(ctx.prisma);
 
 				try {
+					// Validate input
+					if (!input.podName || typeof input.podName !== 'string' || input.podName.trim() === '') {
+						throw new TRPCError({
+							code: 'BAD_REQUEST',
+							message: 'Pod name is required and must be a non-empty string',
+						});
+					}
+
 					const logs = await k8sService.getPodLogs(input.serviceId, input.podName, {
 						container: input.container,
 						tailLines: input.tailLines,

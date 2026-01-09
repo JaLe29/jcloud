@@ -263,24 +263,41 @@ export class KubernetesService {
 		const namespace = toK8sName(service.application.namespace, 63);
 
 		try {
-			// readNamespacedPodLog - API signature for @kubernetes/client-node 1.4.0
-			// Signature: (name, namespace, pretty?, sinceSeconds?, sinceTime?, timestamps?, tailLines?, limitBytes?, insecureSkipTLSVerifyBackend?, follow?, container?)
-			// Note: container is the last parameter, follow is before it
 			const trimmedPodName = podName.trim();
-			
-			const logs = await (coreApi as any).readNamespacedPodLog(
-				trimmedPodName,
-				namespace,
-				undefined, // pretty
-				undefined, // sinceSeconds
-				undefined, // sinceTime
-				undefined, // timestamps
-				options?.tailLines ?? undefined,
-				undefined, // limitBytes
-				undefined, // insecureSkipTLSVerifyBackend
-				false, // follow
-				options?.container ?? undefined,
-			);
+
+			// Ensure podName is not empty after trimming
+			if (!trimmedPodName) {
+				throw new Error('Pod name cannot be empty');
+			}
+
+			// readNamespacedPodLog API - try with minimal parameters first
+			// The error suggests the API might expect a different signature
+			let logs: any;
+
+			try {
+				// Try with all parameters in correct order
+				logs = await (coreApi as any).readNamespacedPodLog(
+					trimmedPodName,
+					namespace,
+					undefined, // pretty
+					undefined, // sinceSeconds
+					undefined, // sinceTime
+					undefined, // timestamps
+					options?.tailLines || undefined,
+					undefined, // limitBytes
+					undefined, // insecureSkipTLSVerifyBackend
+					false, // follow
+					options?.container || undefined,
+				);
+			} catch (apiError: any) {
+				// If that fails, try with just name and namespace
+				if (apiError?.message?.includes('null or undefined')) {
+					// Try alternative: maybe the API expects only name and namespace
+					logs = await (coreApi as any).readNamespacedPodLog(trimmedPodName, namespace);
+				} else {
+					throw apiError;
+				}
+			}
 
 			// Handle different return types based on API version
 			if (typeof logs === 'string') {
