@@ -49,6 +49,16 @@ export const kubernetesRouter = (router: Router, procedure: Procedure) => {
 						});
 					}
 
+					// biome-ignore lint/suspicious/noConsole: debug logging
+					console.log('[getPodLogs router] Input:', {
+						serviceId: input.serviceId,
+						podName: input.podName,
+						podNameType: typeof input.podName,
+						podNameLength: input.podName.length,
+						container: input.container,
+						tailLines: input.tailLines,
+					});
+
 					const logs = await k8sService.getPodLogs(input.serviceId, input.podName, {
 						container: input.container,
 						tailLines: input.tailLines,

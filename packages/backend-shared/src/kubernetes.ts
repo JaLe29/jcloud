@@ -270,34 +270,31 @@ export class KubernetesService {
 				throw new Error('Pod name cannot be empty');
 			}
 
-			// readNamespacedPodLog API - try with minimal parameters first
-			// The error suggests the API might expect a different signature
-			let logs: any;
+			// biome-ignore lint/suspicious/noConsole: debug logging
+			console.log('[getPodLogs] Calling with:', {
+				podName: trimmedPodName,
+				namespace,
+				tailLines: options?.tailLines,
+				container: options?.container,
+			});
 
-			try {
-				// Try with all parameters in correct order
-				logs = await (coreApi as any).readNamespacedPodLog(
-					trimmedPodName,
-					namespace,
-					undefined, // pretty
-					undefined, // sinceSeconds
-					undefined, // sinceTime
-					undefined, // timestamps
-					options?.tailLines || undefined,
-					undefined, // limitBytes
-					undefined, // insecureSkipTLSVerifyBackend
-					false, // follow
-					options?.container || undefined,
-				);
-			} catch (apiError: any) {
-				// If that fails, try with just name and namespace
-				if (apiError?.message?.includes('null or undefined')) {
-					// Try alternative: maybe the API expects only name and namespace
-					logs = await (coreApi as any).readNamespacedPodLog(trimmedPodName, namespace);
-				} else {
-					throw apiError;
-				}
-			}
+			// readNamespacedPodLog API - the error suggests the first parameter might be getting lost
+			// Try a different approach: call with explicit parameters, avoiding undefined where possible
+			// Build the call with only defined optional parameters
+			const apiParams: any[] = [trimmedPodName, namespace];
+
+			// Add optional parameters - use null instead of undefined for optional params that aren't set
+			apiParams.push(null); // pretty
+			apiParams.push(null); // sinceSeconds
+			apiParams.push(null); // sinceTime
+			apiParams.push(null); // timestamps
+			apiParams.push(options?.tailLines ?? null); // tailLines
+			apiParams.push(null); // limitBytes
+			apiParams.push(null); // insecureSkipTLSVerifyBackend
+			apiParams.push(false); // follow
+			apiParams.push(options?.container ?? null); // container
+
+			const logs = await (coreApi as any).readNamespacedPodLog(...apiParams);
 
 			// Handle different return types based on API version
 			if (typeof logs === 'string') {
