@@ -2,8 +2,10 @@ import {
 	type DeployTaskMeta,
 	decrypt,
 	isDeployTaskMeta,
+	isServiceDeleteTaskMeta,
 	isServiceUpdateTaskMeta,
 	KubernetesService,
+	type ServiceDeleteTaskMeta,
 	type ServiceUpdateTaskMeta,
 	toK8sName,
 } from '@jcloud/backend-shared';
@@ -522,6 +524,56 @@ export class TaskService {
 		}
 	}
 
+	async deleteK8sService(coreApi: CoreV1Api, name: string, namespace: string, taskId: string): Promise<void> {
+		const serviceName = toK8sName(name);
+		const k8sNamespace = toK8sName(namespace, 63);
+
+		try {
+			await this.appendLog(taskId, `Deleting Kubernetes service ${serviceName} from ${k8sNamespace}...`);
+			await coreApi.deleteNamespacedService({
+				name: serviceName,
+				namespace: k8sNamespace,
+			});
+			await this.appendLog(taskId, `✓ Service ${serviceName} deleted successfully from ${k8sNamespace}`);
+		} catch (err: unknown) {
+			const e = err as { code?: number; response?: { statusCode?: number } };
+			const statusCode = e.code ?? e.response?.statusCode;
+			if (statusCode === 404) {
+				await this.appendLog(
+					taskId,
+					`Service ${serviceName} does not exist in ${k8sNamespace}, skipping deletion`,
+				);
+			} else {
+				throw err;
+			}
+		}
+	}
+
+	async deleteDeployment(appsApi: AppsV1Api, name: string, namespace: string, taskId: string): Promise<void> {
+		const deploymentName = toK8sName(name);
+		const k8sNamespace = toK8sName(namespace, 63);
+
+		try {
+			await this.appendLog(taskId, `Deleting deployment ${deploymentName} from ${k8sNamespace}...`);
+			await appsApi.deleteNamespacedDeployment({
+				name: deploymentName,
+				namespace: k8sNamespace,
+			});
+			await this.appendLog(taskId, `✓ Deployment ${deploymentName} deleted successfully from ${k8sNamespace}`);
+		} catch (err: unknown) {
+			const e = err as { code?: number; response?: { statusCode?: number } };
+			const statusCode = e.code ?? e.response?.statusCode;
+			if (statusCode === 404) {
+				await this.appendLog(
+					taskId,
+					`Deployment ${deploymentName} does not exist in ${k8sNamespace}, skipping deletion`,
+				);
+			} else {
+				throw err;
+			}
+		}
+	}
+
 	async run(task: Task): Promise<void> {
 		// Mark task as executing
 		await this.prisma.task.update({
@@ -533,8 +585,63 @@ export class TaskService {
 		});
 
 		try {
-			await this.appendLog(task.id, `Starting deployment task ${task.id}`);
+			await this.appendLog(task.id, `Starting task ${task.id}`);
 
+			// Handle service deletion task
+			if (isServiceDeleteTaskMeta(task.meta)) {
+				const deleteMeta: ServiceDeleteTaskMeta = task.meta;
+				await this.appendLog(task.id, 'Task type: Service Deletion');
+				await this.appendLog(task.id, `Service: ${deleteMeta.serviceName}`);
+				await this.appendLog(task.id, `Namespace: ${deleteMeta.namespace}`);
+
+				// Load kubeconfig from database for the cluster
+				await this.appendLog(task.id, 'Loading Kubernetes configuration...');
+				const { coreApi, appsApi, networkingApi } = await this.k8sService.loadKubeConfig(deleteMeta.clusterId);
+				await this.appendLog(task.id, '✓ Kubernetes configuration loaded');
+
+				const namespace = deleteMeta.namespace;
+				const serviceName = deleteMeta.serviceName;
+
+				// Delete ingress (if exists)
+				await this.appendLog(task.id, 'Deleting ingress...');
+				try {
+					await this.deleteIngress(networkingApi, serviceName, namespace, task.id);
+				} catch (err) {
+					const errorMessage = err instanceof Error ? err.message : String(err);
+					await this.appendLog(task.id, `✗ Warning: Failed to delete ingress: ${errorMessage}`);
+				}
+
+				// Delete Kubernetes service (if exists)
+				await this.appendLog(task.id, 'Deleting Kubernetes service...');
+				try {
+					await this.deleteK8sService(coreApi, serviceName, namespace, task.id);
+				} catch (err) {
+					const errorMessage = err instanceof Error ? err.message : String(err);
+					await this.appendLog(task.id, `✗ Warning: Failed to delete service: ${errorMessage}`);
+				}
+
+				// Delete deployment (if exists)
+				await this.appendLog(task.id, 'Deleting deployment...');
+				try {
+					await this.deleteDeployment(appsApi, serviceName, namespace, task.id);
+				} catch (err) {
+					const errorMessage = err instanceof Error ? err.message : String(err);
+					await this.appendLog(task.id, `✗ Warning: Failed to delete deployment: ${errorMessage}`);
+				}
+
+				// Mark task as done
+				await this.appendLog(task.id, '✓ Service deletion completed successfully');
+				await this.prisma.task.update({
+					where: { id: task.id },
+					data: {
+						status: 'DONE',
+						finishedAt: new Date(),
+					},
+				});
+				return;
+			}
+
+			// Handle deploy/update tasks
 			let image: string;
 
 			if (isDeployTaskMeta(task.meta)) {
@@ -594,7 +701,10 @@ export class TaskService {
 			await this.appendLog(task.id, `Namespace: ${serviceWithAllFields.application.namespace}`);
 
 			if (!serviceWithAllFields.application.cluster) {
-				await this.failTask(task.id, `Cluster not found for application ${serviceWithAllFields.application.id}`);
+				await this.failTask(
+					task.id,
+					`Cluster not found for application ${serviceWithAllFields.application.id}`,
+				);
 				return;
 			}
 
@@ -615,7 +725,10 @@ export class TaskService {
 			// Create docker secrets
 			const imagePullSecrets: string[] = [];
 			if (serviceWithAllFields.dockerSecrets.length > 0) {
-				await this.appendLog(task.id, `Processing ${serviceWithAllFields.dockerSecrets.length} Docker secret(s)...`);
+				await this.appendLog(
+					task.id,
+					`Processing ${serviceWithAllFields.dockerSecrets.length} Docker secret(s)...`,
+				);
 				for (const { dockerSecret } of serviceWithAllFields.dockerSecrets) {
 					await this.createDockerSecret(
 						coreApi,
@@ -742,10 +855,7 @@ export class TaskService {
 				} catch (err) {
 					// Log warning but don't fail the task if ingress deletion fails
 					const errorMessage = err instanceof Error ? err.message : String(err);
-					await this.appendLog(
-						task.id,
-						`✗ Warning: Failed to delete ingress: ${errorMessage}`,
-					);
+					await this.appendLog(task.id, `✗ Warning: Failed to delete ingress: ${errorMessage}`);
 				}
 			}
 

@@ -8,11 +8,14 @@ export {
 } from './kubernetes';
 export {
 	createDeployTaskMeta,
+	createServiceDeleteTaskMeta,
 	createServiceUpdateTaskMeta,
 	type DeployTaskMeta,
 	getTaskTypeLabel,
 	isDeployTaskMeta,
+	isServiceDeleteTaskMeta,
 	isServiceUpdateTaskMeta,
+	type ServiceDeleteTaskMeta,
 	type ServiceUpdateTaskMeta,
 	TASK_TYPE,
 	type TaskMeta,

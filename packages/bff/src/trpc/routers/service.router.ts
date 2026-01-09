@@ -1,4 +1,4 @@
-import { createDeployTaskMeta, createServiceUpdateTaskMeta } from '@jcloud/backend-shared';
+import { createDeployTaskMeta, createServiceDeleteTaskMeta, createServiceUpdateTaskMeta } from '@jcloud/backend-shared';
 import type { Prisma } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
@@ -23,11 +23,7 @@ const createServiceSchema = z.object({
 	replicas: z.number().int().min(0).max(100).default(1),
 	containerPort: z.number().int().min(1).max(65535),
 	ingressUrl: z
-		.union([
-			z.string().url(),
-			z.literal('').transform(() => null),
-			z.null(),
-		])
+		.union([z.string().url(), z.literal('').transform(() => null), z.null()])
 		.optional()
 		.nullable(),
 	cpuRequest: z.number().int().min(0).optional().nullable(),
@@ -56,11 +52,7 @@ const updateServiceSchema = z.object({
 	replicas: z.number().int().min(0).max(100).optional(),
 	containerPort: z.number().int().min(1).max(65535).optional(),
 	ingressUrl: z
-		.union([
-			z.string().url(),
-			z.literal('').transform(() => null),
-			z.null(),
-		])
+		.union([z.string().url(), z.literal('').transform(() => null), z.null()])
 		.optional()
 		.nullable(),
 	cpuRequest: z.number().int().min(0).optional().nullable(),
@@ -263,6 +255,13 @@ export const serviceRouter = (router: Router, procedure: Procedure) => {
 		delete: procedure.input(z.object({ id: z.string().uuid() })).mutation(async ({ ctx, input }) => {
 			const existing = await ctx.prisma.service.findUnique({
 				where: { id: input.id },
+				include: {
+					application: {
+						include: {
+							cluster: true,
+						},
+					},
+				},
 			});
 
 			if (!existing) {
@@ -272,6 +271,22 @@ export const serviceRouter = (router: Router, procedure: Procedure) => {
 				});
 			}
 
+			// Create task for deleting Kubernetes resources before deleting from database
+			// This ensures we have all necessary information even after service is deleted
+			if (existing.application.cluster) {
+				await ctx.prisma.task.create({
+					data: {
+						serviceId: input.id, // Keep serviceId for reference, even though service will be deleted
+						meta: createServiceDeleteTaskMeta(
+							existing.name,
+							existing.application.namespace,
+							existing.application.cluster.id,
+						) as unknown as Prisma.InputJsonValue,
+					},
+				});
+			}
+
+			// Delete service from database (this will cascade delete related records)
 			await ctx.prisma.service.delete({
 				where: { id: input.id },
 			});

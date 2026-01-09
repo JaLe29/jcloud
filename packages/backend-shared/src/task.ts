@@ -2,6 +2,7 @@
 export const TASK_TYPE = {
 	DEPLOY_CREATED: 'deploy-created',
 	SERVICE_UPDATED: 'service-updated',
+	SERVICE_DELETED: 'service-deleted',
 } as const;
 
 export type TaskType = (typeof TASK_TYPE)[keyof typeof TASK_TYPE];
@@ -19,8 +20,16 @@ export interface ServiceUpdateTaskMeta {
 	image: string;
 }
 
+// Service delete task meta
+export interface ServiceDeleteTaskMeta {
+	type: typeof TASK_TYPE.SERVICE_DELETED;
+	serviceName: string;
+	namespace: string;
+	clusterId: string;
+}
+
 // Union of all task meta types
-export type TaskMeta = DeployTaskMeta | ServiceUpdateTaskMeta;
+export type TaskMeta = DeployTaskMeta | ServiceUpdateTaskMeta | ServiceDeleteTaskMeta;
 
 // Helper to create deploy task meta
 export function createDeployTaskMeta(image: string, deployId: string): DeployTaskMeta {
@@ -36,6 +45,20 @@ export function createServiceUpdateTaskMeta(image: string): ServiceUpdateTaskMet
 	return {
 		type: TASK_TYPE.SERVICE_UPDATED,
 		image,
+	};
+}
+
+// Helper to create service delete task meta
+export function createServiceDeleteTaskMeta(
+	serviceName: string,
+	namespace: string,
+	clusterId: string,
+): ServiceDeleteTaskMeta {
+	return {
+		type: TASK_TYPE.SERVICE_DELETED,
+		serviceName,
+		namespace,
+		clusterId,
 	};
 }
 
@@ -59,6 +82,16 @@ export function isServiceUpdateTaskMeta(meta: unknown): meta is ServiceUpdateTas
 	);
 }
 
+// Type guard to check if meta is service delete task
+export function isServiceDeleteTaskMeta(meta: unknown): meta is ServiceDeleteTaskMeta {
+	return (
+		typeof meta === 'object' &&
+		meta !== null &&
+		'type' in meta &&
+		(meta as ServiceDeleteTaskMeta).type === TASK_TYPE.SERVICE_DELETED
+	);
+}
+
 // Helper to get task type label for UI
 export function getTaskTypeLabel(type: string): string {
 	switch (type) {
@@ -66,6 +99,8 @@ export function getTaskTypeLabel(type: string): string {
 			return 'Deployment';
 		case TASK_TYPE.SERVICE_UPDATED:
 			return 'Service Update';
+		case TASK_TYPE.SERVICE_DELETED:
+			return 'Service Deletion';
 		default:
 			return type;
 	}
