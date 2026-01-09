@@ -278,22 +278,27 @@ export class KubernetesService {
 				container: options?.container,
 			});
 
-			// readNamespacedPodLog API - based on examples, it seems to accept:
-			// (name, namespace, container?, ...otherOptionalParams)
-			// But the error suggests it might expect a simpler signature
-			// Try calling with just name, namespace, and container first
-			let logs: any;
+			// readNamespacedPodLog API - based on other API calls in the codebase,
+			// some methods expect an object with parameters instead of individual arguments
+			// Try using object parameter format similar to readNamespacedDeployment
+			const logParams: any = {
+				name: trimmedPodName,
+				namespace: namespace,
+			};
 
+			// Add optional parameters if provided
 			if (options?.container) {
-				// If container is specified, pass it as third parameter
-				logs = await (coreApi as any).readNamespacedPodLog(trimmedPodName, namespace, options.container);
-			} else {
-				// If no container, try with just name and namespace
-				logs = await (coreApi as any).readNamespacedPodLog(trimmedPodName, namespace);
+				logParams.container = options.container;
+			}
+			if (options?.tailLines) {
+				logParams.tailLines = options.tailLines;
+			}
+			if (options?.previous) {
+				logParams.previous = options.previous;
 			}
 
-			// If we need tailLines, we might need to use a different approach
-			// But let's first see if basic call works
+			// Try calling with object parameter
+			const logs = await (coreApi as any).readNamespacedPodLog(logParams);
 
 			// Handle different return types based on API version
 			if (typeof logs === 'string') {
