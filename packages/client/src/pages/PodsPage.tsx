@@ -2,15 +2,17 @@ import {
 	CheckCircleOutlined,
 	CloseCircleOutlined,
 	ExclamationCircleOutlined,
+	FileTextOutlined,
 	LoadingOutlined,
 } from '@ant-design/icons';
 import type { AppRouter } from '@jcloud/bff/src/trpc/router';
 import { useQueries } from '@tanstack/react-query';
 import type { inferRouterOutputs } from '@trpc/server';
-import { Card, Select, Space, Table, Tag, Typography } from 'antd';
+import { Button, Card, Select, Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { PodLogsModal } from '../components/features/PodLogsModal';
 import { trpc } from '../utils/trpc';
 
 const { Title, Text } = Typography;
@@ -59,6 +61,9 @@ export const PodsPage = () => {
 	const navigate = useNavigate();
 	const [applicationFilter, setApplicationFilter] = useState<string | undefined>();
 	const [serviceFilter, setServiceFilter] = useState<string | undefined>();
+	const [selectedPod, setSelectedPod] = useState<{ serviceId: string; name: string; container?: string } | null>(
+		null,
+	);
 
 	const { data: applicationsData } = trpc.application.list.useQuery({ limit: 100 });
 
@@ -265,6 +270,21 @@ export const PodsPage = () => {
 				</Text>
 			),
 		},
+		{
+			title: '',
+			key: 'actions',
+			width: 80,
+			align: 'center',
+			render: (_: unknown, record: PodWithService) => (
+				<Button
+					type="text"
+					size="small"
+					icon={<FileTextOutlined />}
+					onClick={() => setSelectedPod({ serviceId: record.serviceId, name: record.name })}
+					title="View logs"
+				/>
+			),
+		},
 	];
 
 	// Calculate totals
@@ -342,6 +362,16 @@ export const PodsPage = () => {
 					/>
 				</Space>
 			</Card>
+
+			{selectedPod && (
+				<PodLogsModal
+					open={!!selectedPod}
+					onClose={() => setSelectedPod(null)}
+					serviceId={selectedPod.serviceId}
+					podName={selectedPod.name}
+					container={selectedPod.container}
+				/>
+			)}
 		</Space>
 	);
 };

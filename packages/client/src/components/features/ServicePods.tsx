@@ -2,13 +2,16 @@ import {
 	CheckCircleOutlined,
 	CloseCircleOutlined,
 	ExclamationCircleOutlined,
+	FileTextOutlined,
 	LoadingOutlined,
 } from '@ant-design/icons';
 import type { AppRouter } from '@jcloud/bff/src/trpc/router';
 import type { inferRouterOutputs } from '@trpc/server';
-import { Card, Space, Table, Tag, Typography } from 'antd';
+import { Button, Card, Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import { useState } from 'react';
 import { trpc } from '../../utils/trpc';
+import { PodLogsModal } from './PodLogsModal';
 
 const { Text } = Typography;
 
@@ -50,6 +53,8 @@ const getPodStatusIcon = (status: string, ready: boolean): React.ReactNode => {
 };
 
 export const ServicePods = ({ serviceId }: ServicePodsProps) => {
+	const [selectedPod, setSelectedPod] = useState<{ name: string; container?: string } | null>(null);
+
 	const { data, isLoading, error } = trpc.kubernetes.getServiceStatus.useQuery(
 		{ serviceId },
 		{
@@ -159,6 +164,21 @@ export const ServicePods = ({ serviceId }: ServicePodsProps) => {
 				</Text>
 			),
 		},
+		{
+			title: '',
+			key: 'actions',
+			width: 80,
+			align: 'center',
+			render: (_: unknown, record: PodInfo) => (
+				<Button
+					type="text"
+					size="small"
+					icon={<FileTextOutlined />}
+					onClick={() => setSelectedPod({ name: record.name })}
+					title="View logs"
+				/>
+			),
+		},
 	];
 
 	const replicasInfo = `${data.readyReplicas}/${data.desiredReplicas} ready`;
@@ -188,14 +208,25 @@ export const ServicePods = ({ serviceId }: ServicePodsProps) => {
 					</Text>
 				</Space>
 			) : (
-				<Table
-					columns={columns}
-					dataSource={data.pods}
-					rowKey="name"
-					pagination={false}
-					size="small"
-					loading={isLoading}
-				/>
+				<>
+					<Table
+						columns={columns}
+						dataSource={data.pods}
+						rowKey="name"
+						pagination={false}
+						size="small"
+						loading={isLoading}
+					/>
+					{selectedPod && (
+						<PodLogsModal
+							open={!!selectedPod}
+							onClose={() => setSelectedPod(null)}
+							serviceId={serviceId}
+							podName={selectedPod.name}
+							container={selectedPod.container}
+						/>
+					)}
+				</>
 			)}
 		</Card>
 	);

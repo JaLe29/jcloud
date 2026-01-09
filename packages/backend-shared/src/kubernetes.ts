@@ -229,4 +229,53 @@ export class KubernetesService {
 		}
 		return `${diffSecs}s`;
 	}
+
+	/**
+	 * Get logs from a pod
+	 */
+	async getPodLogs(
+		serviceId: string,
+		podName: string,
+		options?: { container?: string; tailLines?: number; previous?: boolean },
+	): Promise<string> {
+		// Get service with application and cluster
+		const service = await this.prisma.service.findUnique({
+			where: { id: serviceId },
+			include: {
+				application: {
+					include: {
+						cluster: true,
+					},
+				},
+			},
+		});
+
+		if (!service || !service.application.cluster) {
+			throw new Error(`Service ${serviceId} not found or cluster not configured`);
+		}
+
+		const { coreApi } = await this.loadKubeConfig(service.application.cluster.id);
+		const namespace = toK8sName(service.application.namespace, 63);
+
+		try {
+			const logs = await coreApi.readNamespacedPodLog(
+				podName,
+				namespace,
+				options?.container,
+				undefined, // follow
+				options?.previous,
+				undefined, // sinceSeconds
+				undefined, // sinceTime
+				options?.tailLines,
+			);
+
+			return logs || '';
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			if (errorMessage.includes('404') || errorMessage.includes('not found')) {
+				throw new Error(`Pod ${podName} not found in namespace ${namespace}`);
+			}
+			throw new Error(`Failed to get pod logs: ${errorMessage}`);
+		}
+	}
 }

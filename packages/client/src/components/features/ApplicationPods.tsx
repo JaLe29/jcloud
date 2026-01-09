@@ -2,15 +2,17 @@ import {
 	CheckCircleOutlined,
 	CloseCircleOutlined,
 	ExclamationCircleOutlined,
+	FileTextOutlined,
 	LoadingOutlined,
 } from '@ant-design/icons';
 import type { AppRouter } from '@jcloud/bff/src/trpc/router';
 import { useQueries } from '@tanstack/react-query';
 import type { inferRouterOutputs } from '@trpc/server';
-import { Card, Collapse, Space, Table, Tag, Typography } from 'antd';
+import { Button, Card, Collapse, Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { trpc } from '../../utils/trpc';
+import { PodLogsModal } from './PodLogsModal';
 
 const { Text } = Typography;
 const { Panel } = Collapse;
@@ -58,6 +60,11 @@ const getPodStatusIcon = (status: string, ready: boolean): React.ReactNode => {
 };
 
 export const ApplicationPods = ({ serviceIds }: ApplicationPodsProps) => {
+	const [selectedPod, setSelectedPod] = useState<{
+		name: string;
+		serviceId: string;
+	} | null>(null);
+
 	// Fetch status for all services in parallel using useQueries
 	const utils = trpc.useUtils();
 	const serviceStatusQueries = useQueries({
@@ -191,6 +198,26 @@ export const ApplicationPods = ({ serviceIds }: ApplicationPodsProps) => {
 				</Text>
 			),
 		},
+		{
+			title: 'Actions',
+			key: 'actions',
+			width: 100,
+			align: 'center',
+			render: (_: unknown, record: PodWithService) => (
+				<Button
+					type="text"
+					size="small"
+					icon={<FileTextOutlined />}
+					onClick={() =>
+						setSelectedPod({
+							name: record.name,
+							serviceId: record.serviceId,
+						})
+					}
+					title="View logs"
+				/>
+			),
+		},
 	];
 
 	if (isLoading) {
@@ -250,6 +277,14 @@ export const ApplicationPods = ({ serviceIds }: ApplicationPodsProps) => {
 						size="small"
 						loading={isLoading}
 					/>
+					{selectedPod && (
+						<PodLogsModal
+							open={!!selectedPod}
+							onClose={() => setSelectedPod(null)}
+							serviceId={selectedPod.serviceId}
+							podName={selectedPod.name}
+						/>
+					)}
 					{serviceStatuses.length > 0 && (
 						<div style={{ marginTop: 16 }}>
 							<Collapse size="small" ghost>

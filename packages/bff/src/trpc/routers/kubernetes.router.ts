@@ -27,5 +27,40 @@ export const kubernetesRouter = (router: Router, procedure: Procedure) => {
 				});
 			}
 		}),
+		getPodLogs: procedure
+			.input(
+				z.object({
+					serviceId: z.string().uuid(),
+					podName: z.string(),
+					container: z.string().optional(),
+					tailLines: z.number().int().positive().max(10000).optional(),
+					previous: z.boolean().optional(),
+				}),
+			)
+			.query(async ({ ctx, input }) => {
+				const k8sService = new KubernetesService(ctx.prisma);
+
+				try {
+					const logs = await k8sService.getPodLogs(input.serviceId, input.podName, {
+						container: input.container,
+						tailLines: input.tailLines,
+						previous: input.previous,
+					});
+
+					return { logs };
+				} catch (error) {
+					const errorMessage = error instanceof Error ? error.message : String(error);
+					if (errorMessage.includes('not found')) {
+						throw new TRPCError({
+							code: 'NOT_FOUND',
+							message: errorMessage,
+						});
+					}
+					throw new TRPCError({
+						code: 'INTERNAL_SERVER_ERROR',
+						message: `Failed to get pod logs: ${errorMessage}`,
+					});
+				}
+			}),
 	});
 };
