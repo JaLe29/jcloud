@@ -238,6 +238,11 @@ export class KubernetesService {
 		podName: string,
 		options?: { container?: string; tailLines?: number; previous?: boolean },
 	): Promise<string> {
+		// Validate podName first
+		if (!podName || typeof podName !== 'string' || podName.trim() === '') {
+			throw new Error('Pod name is required and must be a non-empty string');
+		}
+
 		// Get service with application and cluster
 		const service = await this.prisma.service.findUnique({
 			where: { id: serviceId },
@@ -258,22 +263,33 @@ export class KubernetesService {
 		const namespace = toK8sName(service.application.namespace, 63);
 
 		try {
-			// readNamespacedPodLog API signature varies by version, using type assertion
+			// readNamespacedPodLog - API signature for @kubernetes/client-node 1.4.0
+			// Signature: (name, namespace, pretty?, sinceSeconds?, sinceTime?, timestamps?, tailLines?, limitBytes?, insecureSkipTLSVerifyBackend?, follow?, container?)
+			// Note: container is the last parameter, follow is before it
+			const trimmedPodName = podName.trim();
+			
 			const logs = await (coreApi as any).readNamespacedPodLog(
-				podName,
+				trimmedPodName,
 				namespace,
 				undefined, // pretty
 				undefined, // sinceSeconds
 				undefined, // sinceTime
 				undefined, // timestamps
-				options?.tailLines,
+				options?.tailLines ?? undefined,
 				undefined, // limitBytes
 				undefined, // insecureSkipTLSVerifyBackend
 				false, // follow
-				options?.container,
+				options?.container ?? undefined,
 			);
 
-			return typeof logs === 'string' ? logs : logs.body || '';
+			// Handle different return types based on API version
+			if (typeof logs === 'string') {
+				return logs;
+			}
+			if (logs && typeof logs === 'object' && 'body' in logs) {
+				return logs.body || '';
+			}
+			return '';
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error);
 			if (errorMessage.includes('404') || errorMessage.includes('not found')) {
