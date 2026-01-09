@@ -258,18 +258,22 @@ export class KubernetesService {
 		const namespace = toK8sName(service.application.namespace, 63);
 
 		try {
-			const logs = await coreApi.readNamespacedPodLog(
+			// readNamespacedPodLog API signature varies by version, using type assertion
+			const logs = await (coreApi as any).readNamespacedPodLog(
 				podName,
 				namespace,
-				options?.container,
-				undefined, // follow
-				options?.previous,
+				undefined, // pretty
 				undefined, // sinceSeconds
 				undefined, // sinceTime
+				undefined, // timestamps
 				options?.tailLines,
+				undefined, // limitBytes
+				undefined, // insecureSkipTLSVerifyBackend
+				false, // follow
+				options?.container,
 			);
 
-			return logs || '';
+			return typeof logs === 'string' ? logs : logs.body || '';
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error);
 			if (errorMessage.includes('404') || errorMessage.includes('not found')) {
