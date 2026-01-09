@@ -492,6 +492,36 @@ export class TaskService {
 		return response;
 	}
 
+	async deleteIngress(
+		networkingApi: NetworkingV1Api,
+		name: string,
+		namespace: string,
+		taskId: string,
+	): Promise<void> {
+		const ingressName = toK8sName(name);
+		const k8sNamespace = toK8sName(namespace, 63);
+
+		try {
+			await this.appendLog(taskId, `Deleting ingress ${ingressName} from ${k8sNamespace}...`);
+			await networkingApi.deleteNamespacedIngress({
+				name: ingressName,
+				namespace: k8sNamespace,
+			});
+			await this.appendLog(taskId, `✓ Ingress ${ingressName} deleted successfully from ${k8sNamespace}`);
+		} catch (err: unknown) {
+			const e = err as { code?: number; response?: { statusCode?: number } };
+			const statusCode = e.code ?? e.response?.statusCode;
+			if (statusCode === 404) {
+				await this.appendLog(
+					taskId,
+					`Ingress ${ingressName} does not exist in ${k8sNamespace}, skipping deletion`,
+				);
+			} else {
+				throw err;
+			}
+		}
+	}
+
 	async run(task: Task): Promise<void> {
 		// Mark task as executing
 		await this.prisma.task.update({
@@ -672,10 +702,10 @@ export class TaskService {
 				task.id,
 			);
 
-			// Create Ingress if ingressUrl is defined
+			// Create or delete Ingress based on ingressUrl
 			if (service.ingressUrl) {
 				try {
-					await this.appendLog(task.id, 'Creating ingress...');
+					await this.appendLog(task.id, 'Creating/updating ingress...');
 					const url = new URL(service.ingressUrl);
 					const k8sServiceName = toK8sName(service.name);
 					await this.createIngress(
@@ -696,7 +726,18 @@ export class TaskService {
 					);
 				}
 			} else {
-				await this.appendLog(task.id, 'No ingress URL configured, skipping ingress creation');
+				// Delete ingress if it exists (ingressUrl was removed)
+				await this.appendLog(task.id, 'No ingress URL configured, checking for existing ingress to delete...');
+				try {
+					await this.deleteIngress(networkingApi, service.name, namespace, task.id);
+				} catch (err) {
+					// Log warning but don't fail the task if ingress deletion fails
+					const errorMessage = err instanceof Error ? err.message : String(err);
+					await this.appendLog(
+						task.id,
+						`✗ Warning: Failed to delete ingress: ${errorMessage}`,
+					);
+				}
 			}
 
 			// Mark task as done

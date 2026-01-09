@@ -117,10 +117,15 @@ export const ServiceFormPage = () => {
 	}, [service, form]);
 
 	const handleSubmit = (values: ServiceFormValues) => {
+		// Convert empty string to null for ingressUrl
+		const processedValues = {
+			...values,
+			ingressUrl: values.ingressUrl?.trim() === '' ? null : values.ingressUrl,
+		};
 		if (isEditing) {
-			updateMutation.mutate({ id: serviceId!, ...values });
+			updateMutation.mutate({ id: serviceId!, ...processedValues });
 		} else {
-			createMutation.mutate({ applicationId: applicationId!, ...values });
+			createMutation.mutate({ applicationId: applicationId!, ...processedValues });
 		}
 	};
 
@@ -230,13 +235,27 @@ export const ServiceFormPage = () => {
 							<InputNumber min={1} max={65535} style={{ width: '100%' }} placeholder="8080" />
 						</Form.Item>
 
-						<Form.Item
-							label="Ingress URL"
-							name="ingressUrl"
-							rules={[{ type: 'url', message: 'Invalid URL' }]}
-						>
-							<Input placeholder="https://api.example.com" />
-						</Form.Item>
+					<Form.Item
+						label="Ingress URL"
+						name="ingressUrl"
+						rules={[
+							{
+								validator: (_, value) => {
+									if (!value || value.trim() === '') {
+										return Promise.resolve();
+									}
+									try {
+										new URL(value);
+										return Promise.resolve();
+									} catch {
+										return Promise.reject(new Error('Invalid URL'));
+									}
+								},
+							},
+						]}
+					>
+						<Input placeholder="https://api.example.com" />
+					</Form.Item>
 
 						<Divider>Resources</Divider>
 

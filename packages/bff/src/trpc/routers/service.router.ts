@@ -22,7 +22,14 @@ const createServiceSchema = z.object({
 	name: z.string().min(1).max(100),
 	replicas: z.number().int().min(0).max(100).default(1),
 	containerPort: z.number().int().min(1).max(65535),
-	ingressUrl: z.string().url().optional().nullable(),
+	ingressUrl: z
+		.union([
+			z.string().url(),
+			z.literal('').transform(() => null),
+			z.null(),
+		])
+		.optional()
+		.nullable(),
 	cpuRequest: z.number().int().min(0).optional().nullable(),
 	cpuLimit: z.number().int().min(0).optional().nullable(),
 	memoryRequest: z.number().int().min(0).optional().nullable(),
@@ -48,7 +55,14 @@ const updateServiceSchema = z.object({
 	name: z.string().min(1).max(100).optional(),
 	replicas: z.number().int().min(0).max(100).optional(),
 	containerPort: z.number().int().min(1).max(65535).optional(),
-	ingressUrl: z.string().url().optional().nullable(),
+	ingressUrl: z
+		.union([
+			z.string().url(),
+			z.literal('').transform(() => null),
+			z.null(),
+		])
+		.optional()
+		.nullable(),
 	cpuRequest: z.number().int().min(0).optional().nullable(),
 	cpuLimit: z.number().int().min(0).optional().nullable(),
 	memoryRequest: z.number().int().min(0).optional().nullable(),
